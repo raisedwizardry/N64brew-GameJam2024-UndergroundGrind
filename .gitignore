@@ -7,3 +7,12 @@ filesystem/
 # Blender backup files
 *.blend[0-9]
 
+.DS_Store
+
+/assets/junksnake/*
+/assets/snake3d/*
+/assets/setpoint/*
+
+/code/junksnake/*
+/code/snake3d/*
+/code/setpoint/*
