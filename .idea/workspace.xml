@@ -1,0 +1,226 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="13b4c88a-f37c-4434-a0f8-dc68754cbcc5" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/assets/undergroundgrind/bottled_bubbles.xm" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="DpaMonitoringSettings">
+    <option name="firstShow" value="false" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="HighlightingSettingsPerFile">
+    <setting file="file://$PROJECT_DIR$/assets/blank/blank_template.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/code/snake3d/snake3d.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.c" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/config.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/core.c" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/core.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/main.c" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/menu.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/menu.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/minigame.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/minigame.h" root0="SKIP_HIGHLIGHTING" />
+  </component>
+  <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
+  <component name="ProjectColorInfo">{
+    &quot;associatedIndex&quot;: 6
+    }</component>
+  <component name="ProjectId" id="2oamzlRf2RymCVfktR9HgkIb5r9" />
+  <component name="ProjectLevelVcsManager">
+    <ConfirmationsSetting value="2" id="Add" />
+  </component>
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_ADD_EXTERNAL_FILES": "true",
+    "Native Executable.Ares.executor": "Run",
+    "Native Executable.make and load (real n64).executor": "Run",
+    "Native Executable.make and run (ares from src).executor": "Run",
+    "Native Executable.make and run (local ares).executor": "Run",
+    "Native Executable.make and run.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "Shell Script.Unnamed.executor": "Run",
+    "Shell Script.attach.executor": "Run",
+    "Shell Script.make.executor": "Run",
+    "git-widget-placeholder": "main",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "reference.settingsdialog.IDE.editor.colors",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="RecentsManager">
+    <key name="CidrLocalAttachDebugger.recentlyUsed">
+      <recent name="com.jetbrains.rider.cpp.debugger.RiderCppLLDBDriverConfiguration" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Native Executable.make and run">
+    <configuration name="make and load (real n64)" type="RunNativeExe" factoryName="Native Executable">
+      <option name="EXE_PATH" value="$USER_HOME$/Applications/UNFLoader" />
+      <option name="PROGRAM_PARAMETERS" value="gamejam2024.z64" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="USE_EXTERNAL_CONSOLE" value="0" />
+      <method v="2">
+        <option name="RunConfigurationTask" enabled="false" run_configuration_name="make" run_configuration_type="ShConfigurationType" />
+      </method>
+    </configuration>
+    <configuration name="make and run (ares from src)" type="RunNativeExe" factoryName="Native Executable">
+      <option name="EXE_PATH" value="$PROJECT_DIR$/../ares/desktop-ui/out/ares.app/Contents/MacOS/ares" />
+      <option name="PROGRAM_PARAMETERS" value="--system N64 gamejam2024.z64 --setting DebugServer/Port=1017 --setting DebugServer/Enabled=true --setting DebugServer/UseIPv4=true --setting Paths/Saves=$USER_HOME$/games/ares/saves" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="USE_EXTERNAL_CONSOLE" value="0" />
+      <method v="2">
+        <option name="RunConfigurationTask" enabled="false" run_configuration_name="make" run_configuration_type="ShConfigurationType" />
+      </method>
+    </configuration>
+    <configuration name="make and run (local ares)" type="RunNativeExe" factoryName="Native Executable">
+      <option name="EXE_PATH" value="$USER_HOME$/Applications/ares.app/Contents/MacOS/ares" />
+      <option name="PROGRAM_PARAMETERS" value="--system N64 gamejam2024.z64 --setting DebugServer/Port=1017 --setting DebugServer/Enabled=true --setting DebugServer/UseIPv4=true --setting Paths/Saves=$USER_HOME$/games/ares/saves" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="USE_EXTERNAL_CONSOLE" value="0" />
+      <method v="2">
+        <option name="RunConfigurationTask" enabled="true" run_configuration_name="make" run_configuration_type="ShConfigurationType" />
+      </method>
+    </configuration>
+    <configuration name="make and run" type="RunNativeExe" factoryName="Native Executable">
+      <option name="EXE_PATH" value="/Applications/ares.app/Contents/MacOS/ares" />
+      <option name="PROGRAM_PARAMETERS" value="--system N64 gamejam2024.z64 --setting DebugServer/Port=1017 --setting DebugServer/Enabled=true --setting DebugServer/UseIPv4=true --setting Paths/Saves=$USER_HOME$/games/ares/saves" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="PASS_PARENT_ENVS" value="1" />
+      <option name="USE_EXTERNAL_CONSOLE" value="0" />
+      <method v="2">
+        <option name="RunConfigurationTask" enabled="false" run_configuration_name="make" run_configuration_type="ShConfigurationType" />
+      </method>
+    </configuration>
+    <configuration name="attach" type="ShConfigurationType">
+      <option name="SCRIPT_TEXT" value="lldb gdb-remote 1067" />
+      <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
+      <option name="SCRIPT_PATH" value="" />
+      <option name="SCRIPT_OPTIONS" value="" />
+      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
+      <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
+      <option name="INTERPRETER_PATH" value="/bin/zsh" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="EXECUTE_IN_TERMINAL" value="true" />
+      <option name="EXECUTE_SCRIPT_FILE" value="false" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="clean" type="ShConfigurationType">
+      <option name="SCRIPT_TEXT" value="make clean" />
+      <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
+      <option name="SCRIPT_PATH" value="" />
+      <option name="SCRIPT_OPTIONS" value="" />
+      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
+      <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
+      <option name="INTERPRETER_PATH" value="/bin/zsh" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="EXECUTE_IN_TERMINAL" value="true" />
+      <option name="EXECUTE_SCRIPT_FILE" value="false" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <configuration name="make" type="ShConfigurationType">
+      <option name="SCRIPT_TEXT" value="make" />
+      <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
+      <option name="SCRIPT_PATH" value="" />
+      <option name="SCRIPT_OPTIONS" value="" />
+      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
+      <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
+      <option name="INTERPRETER_PATH" value="/bin/zsh" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="EXECUTE_IN_TERMINAL" value="true" />
+      <option name="EXECUTE_SCRIPT_FILE" value="false" />
+      <envs />
+      <method v="2" />
+    </configuration>
+    <list>
+      <item itemvalue="Native Executable.make and run (local ares)" />
+      <item itemvalue="Native Executable.make and load (real n64)" />
+      <item itemvalue="Native Executable.make and run (ares from src)" />
+      <item itemvalue="Native Executable.make and run" />
+      <item itemvalue="Shell Script.attach" />
+      <item itemvalue="Shell Script.make" />
+      <item itemvalue="Shell Script.clean" />
+    </list>
+  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="Default task">
+      <changelist id="13b4c88a-f37c-4434-a0f8-dc68754cbcc5" name="Changes" comment="" />
+      <created>1731116325514</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1731116325514</updated>
+      <workItem from="1731116328131" duration="24741000" />
+      <workItem from="1732034823984" duration="2323000" />
+      <workItem from="1732037687079" duration="5387000" />
+      <workItem from="1732423057122" duration="24220000" />
+      <workItem from="1732513040532" duration="1828000" />
+      <workItem from="1732514891077" duration="5000" />
+      <workItem from="1732515056956" duration="9052000" />
+      <workItem from="1732991884973" duration="8960000" />
+      <workItem from="1733019285510" duration="4519000" />
+      <workItem from="1733544200810" duration="10308000" />
+      <workItem from="1733595921739" duration="803000" />
+      <workItem from="1733706160922" duration="19890000" />
+      <workItem from="1733793130519" duration="4515000" />
+    </task>
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="UnityCheckinConfiguration" checkUnsavedScenes="true" />
+  <component name="UnityProjectConfiguration" hasMinimizedUI="false" />
+  <component name="VcsManagerConfiguration">
+    <option name="ADD_EXTERNAL_FILES_SILENTLY" value="true" />
+    <option name="CLEAR_INITIAL_COMMIT_MESSAGE" value="true" />
+    <option name="LAST_COMMIT_MESSAGE" value="" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/code/examplegame/examplegame.c</url>
+          <line>92</line>
+          <option name="timeStamp" value="2" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="com.jetbrains.cidr.execution.debugger.OCBreakpointType">
+          <url>file://$PROJECT_DIR$/core.c</url>
+          <line>7</line>
+          <option name="timeStamp" value="3" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
+  </component>
+</project>
