@@ -4,10 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="13b4c88a-f37c-4434-a0f8-dc68754cbcc5" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/assets/undergroundgrind/bottled_bubbles.xm" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" afterDir="false" />
-    </list>
+    <list default="true" id="13b4c88a-f37c-4434-a0f8-dc68754cbcc5" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -189,7 +186,7 @@
       <workItem from="1733544200810" duration="10308000" />
       <workItem from="1733595921739" duration="803000" />
       <workItem from="1733706160922" duration="19890000" />
-      <workItem from="1733793130519" duration="4515000" />
+      <workItem from="1733793130519" duration="4863000" />
     </task>
     <servers />
   </component>
