@@ -10,6 +10,7 @@ typedef struct
     PlyNum plynum;
     T3DMat4FP *modelMatFP;
     rspq_block_t *dplSnake;
+    color_t color;
     T3DAnim animAttack;
     T3DAnim animIdle;
     T3DAnim animWalk;
@@ -37,6 +38,7 @@ void player_init(SnakePlayer *player, color_t color, T3DVec3 position, float rot
 
     player->moveDir = (T3DVec3){{0,0,0}};
     player->playerPos = position;
+    player->color = color;
 
     // First instantiate skeletons, they will be used to draw models in a specific pose
     // And serve as the target for animations to modify
@@ -59,7 +61,7 @@ void player_init(SnakePlayer *player, color_t color, T3DVec3 position, float rot
 
     rspq_block_begin();
     t3d_matrix_push(player->modelMatFP);
-    rdpq_set_prim_color(color);
+    rdpq_set_prim_color(player->color);
     t3d_model_draw_skinned(snakeModel, &player->skel); // as in the last example, draw skinned with the main skeleton
 
     rdpq_set_prim_color(RGBA32(0, 0, 0, 120));
@@ -73,51 +75,6 @@ void player_init(SnakePlayer *player, color_t color, T3DVec3 position, float rot
     player->isAttack = false;
     player->ai_target = rand()%MAXPLAYERS;
     player->ai_reactionspeed = (2-core_get_aidifficulty())*5 + rand()%((3-core_get_aidifficulty())*3);
-}
-
-void player_loop(SnakePlayer *player, float deltaTime, joypad_port_t port, bool is_human, rspq_syncpoint_t syncPoint)
-{
-  if (is_human)
-  {
-    joypad_buttons_t btn = joypad_get_buttons_pressed(port);
-
-    // Player Attack
-    if((btn.a) && !player->animAttack.isPlaying) {
-      t3d_anim_set_playing(&player->animAttack, true);
-      t3d_anim_set_time(&player->animAttack, 0.0f);
-      player->isAttack = true;
-      player->attackTimer = 0;
-    }
-  }
-
-  // Update the animation and modify the skeleton, this will however NOT recalculate the matrices
-  t3d_anim_update(&player->animIdle, deltaTime);
-  t3d_anim_set_speed(&player->animWalk, player->animBlend + 0.15f);
-  t3d_anim_update(&player->animWalk, deltaTime);
-
-  if(player->isAttack) {
-    t3d_anim_update(&player->animAttack, deltaTime); // attack animation now overrides the idle one
-    if(!player->animAttack.isPlaying)player->isAttack = false;
-  }
-
-  // We now blend the walk animation with the idle/attack one
-  t3d_skeleton_blend(&player->skel, &player->skel, &player->skelBlend, player->animBlend);
-
-  // Update the animation and modify the skeleton, this will however NOT recalculate the matrices
-  t3d_anim_update(&player->animIdle, deltaTime);
-
-  // We now blend the walk animation with the idle/attack one
-  if(syncPoint)rspq_syncpoint_wait(syncPoint); // wait for the RSP to process the previous frame
-
-  // Now recalc. the matrices, this will cause any model referencing them to use the new pose
-  t3d_skeleton_update(&player->skel);
-
-  // Update player matrix
-  t3d_mat4fp_from_srt_euler(player->modelMatFP,
-    (float[3]){0.125f, 0.125f, 0.125f},
-    (float[3]){0.0f, -player->rotY, 0},
-    player->playerPos.v
-  );
 }
 
 

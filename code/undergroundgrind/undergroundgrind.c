@@ -38,8 +38,6 @@ static float getFloorHeight(const T3DVec3 *pos) {
 rdpq_font_t *font;
 rdpq_font_t *fontBillboard;
 
-
-
 SnakePlayer players[MAXPLAYERS];
 
 float countDownTimer;
@@ -163,6 +161,10 @@ void minigame_init()
 
 void player_draw(SnakePlayer *player)
 {
+
+    rdpq_set_prim_color(player->color);
+     rdpq_set_prim_color(player->strength <= 0.0001f ? lightColorOff : player->color);
+     //t3d_matrix_set(&matLightFP[1], true);
     rspq_block_run(player->dplSnake);
 }
 
@@ -175,6 +177,51 @@ void minigame_fixedloop(float deltatime)
 {
 }
 
+void player_loop(SnakePlayer *player, float deltaTime, joypad_port_t port, bool is_human)
+{
+  if (is_human)
+  {
+    joypad_buttons_t btn = joypad_get_buttons_pressed(port);
+
+    // Player Attack
+    if((btn.a) && !player->animAttack.isPlaying) {
+      t3d_anim_set_playing(&player->animAttack, true);
+      t3d_anim_set_time(&player->animAttack, 0.0f);
+      player->isAttack = true;
+      player->attackTimer = 0;
+    }
+  }
+
+  // Update the animation and modify the skeleton, this will however NOT recalculate the matrices
+  t3d_anim_update(&player->animIdle, deltaTime);
+  t3d_anim_set_speed(&player->animWalk, player->animBlend + 0.15f);
+  t3d_anim_update(&player->animWalk, deltaTime);
+
+  if(player->isAttack) {
+    t3d_anim_update(&player->animAttack, deltaTime); // attack animation now overrides the idle one
+    if(!player->animAttack.isPlaying)player->isAttack = false;
+  }
+
+  // We now blend the walk animation with the idle/attack one
+  t3d_skeleton_blend(&player->skel, &player->skel, &player->skelBlend, player->animBlend);
+
+  // Update the animation and modify the skeleton, this will however NOT recalculate the matrices
+  t3d_anim_update(&player->animIdle, deltaTime);
+
+  // We now blend the walk animation with the idle/attack one
+  if(syncPoint)rspq_syncpoint_wait(syncPoint); // wait for the RSP to process the previous frame
+
+  // Now recalc. the matrices, this will cause any model referencing them to use the new pose
+  t3d_skeleton_update(&player->skel);
+
+  // Update player matrix
+  t3d_mat4fp_from_srt_euler(player->modelMatFP,
+    (float[3]){0.125f, 0.125f, 0.125f},
+    (float[3]){0.0f, -player->rotY, 0},
+    player->playerPos.v
+  );
+}
+
 void minigame_loop(float deltatime)
 {
   time += deltatime;
@@ -183,7 +230,7 @@ void minigame_loop(float deltatime)
   uint32_t playercount = core_get_playercount();
   for (size_t i = 0; i < MAXPLAYERS; i++)
   {
-    player_loop(&players[i], deltatime, core_get_playercontroller(i), i < playercount, syncPoint);
+    player_loop(&players[i], deltatime, core_get_playercontroller(i), i < playercount);
   }
   joypad_poll();
   joypad_inputs_t joypad = joypad_get_inputs(JOYPAD_PORT_1);
@@ -200,9 +247,9 @@ void minigame_loop(float deltatime)
   //}};
   //t3d_vec3_lerp(&camTargetCurr, &camTargetCurr, &camTarget, 0.2f);
 
-  //T3DVec3 camPos;
-  //t3d_vec3_scale(&camPos, &camDir, 65.0f);
-  //t3d_vec3_add(&camPos, &camTargetCurr, &camPos);
+  T3DVec3 camPos;
+  t3d_vec3_scale(&camPos, &camDir, 65.0f);
+  t3d_vec3_add(&camPos, &camTargetCurr, &camPos);
 
   if(syncPoint)rspq_syncpoint_wait(syncPoint);
 
@@ -239,7 +286,7 @@ void minigame_loop(float deltatime)
     );
 
 
-  //t3d_viewport_look_at(&viewport, &camPos, &camTargetCurr, &(T3DVec3){{0,1,0}});
+  t3d_viewport_look_at(&viewport, &camPos, &camTargetCurr, &(T3DVec3){{0,1,0}});
 
   // ----------- DRAW (3D) ------------ //
   rdpq_attach(display_get(), display_get_zbuf());
@@ -253,8 +300,18 @@ void minigame_loop(float deltatime)
   t3d_screen_clear_color(RGBA32(40, 40, 60, 0xFF));
   t3d_screen_clear_depth();
 
-  // We can still use an ambient light as usual, this doesn't count towards the 7 light limit
   t3d_light_set_ambient(colorAmbient);
+  for (size_t i = 0; i < MAXPLAYERS; i++) {
+    // Sets the actual point light
+    t3d_light_set_point(i, &players[i].color.r, &(T3DVec3){{
+      players[i].playerPos.v[0],
+      players[i].playerPos.v[1] + getFloorHeight(&players[i].playerPos),
+      players[i].playerPos.v[2]
+    }}, players[i].strength, false);
+  }
+  t3d_light_set_count(5);
+
+  // We can still use an ambient light as usual, this doesn't count towards the 7 light limit
 
   t3d_light_set_count(5);
 
@@ -267,10 +324,14 @@ void minigame_loop(float deltatime)
   t3d_matrix_set(modelMatFP, true);
   rspq_block_run(dplMap);
 
+
+
   for (size_t i = 0; i < MAXPLAYERS; i++)
   {
     player_draw(&players[i]);
   }
+
+
 
   t3d_matrix_pop(1);
   syncPoint = rspq_syncpoint_new();
