@@ -12,7 +12,9 @@ filesystem/
 /assets/junksnake/*
 /assets/snake3d/*
 /assets/setpoint/*
+/assets/snakeexample/*
 
 /code/junksnake/*
 /code/snake3d/*
 /code/setpoint/*
+/code/snakeexample/*

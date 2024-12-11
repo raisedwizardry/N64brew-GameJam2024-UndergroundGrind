@@ -52,7 +52,6 @@ T3DVec3 camTarget = {{0,0,0}};
 T3DVec3 camTargetCurr = {{0,0,0}};
 T3DVec3 camDir = {{1,1,1}};
 float viewZoom = 96.0f;
-bool isOrtho = true;
 float textTimer = 7.0f;
 rspq_syncpoint_t syncPoint = 0;
 
@@ -118,7 +117,8 @@ void minigame_init()
 
   modelMatFP = malloc_uncached(sizeof(T3DMat4FP));
   cursorMatFP = malloc_uncached(sizeof(T3DMat4FP));
-  matLightFP = malloc_uncached(sizeof(T3DMat4FP) * 4);
+  //matLightFP = malloc_uncached(sizeof(T3DMat4FP) * 4);
+
 
   t3d_mat4fp_from_srt_euler(modelMatFP,
     (float[]){0.15f, 0.15f, 0.15f},
@@ -162,9 +162,7 @@ void minigame_init()
 void player_draw(SnakePlayer *player)
 {
 
-    rdpq_set_prim_color(player->color);
-     rdpq_set_prim_color(player->strength <= 0.0001f ? lightColorOff : player->color);
-     //t3d_matrix_set(&matLightFP[1], true);
+    t3d_matrix_set(player->matLightFP, true);
     rspq_block_run(player->dplSnake);
 }
 
@@ -216,7 +214,7 @@ void player_loop(SnakePlayer *player, float deltaTime, joypad_port_t port, bool 
 
   // Update player matrix
   t3d_mat4fp_from_srt_euler(player->modelMatFP,
-    (float[3]){0.125f, 0.125f, 0.125f},
+    (float[3]){1.0f, 1.0f, 1.0f},
     (float[3]){0.0f, -player->rotY, 0},
     player->playerPos.v
   );
@@ -242,10 +240,10 @@ void minigame_loop(float deltatime)
 
   // setup camera, look at an isometric angle onto the floor below the selected light
   // and interpolate the camera position to make it smooth
-  //camTarget = (T3DVec3){{
-  //  light->pos.v[0], getFloorHeight(&light->pos) + 2.0f, light->pos.v[2]
-  //}};
-  //t3d_vec3_lerp(&camTargetCurr, &camTargetCurr, &camTarget, 0.2f);
+  camTarget = (T3DVec3){{
+    players[0].playerPos.v[0], getFloorHeight(&players[0].playerPos) + 2.0f, players[0].playerPos.v[2]
+  }};
+  t3d_vec3_lerp(&camTargetCurr, &camTargetCurr, &camTarget, 0.2f);
 
   T3DVec3 camPos;
   t3d_vec3_scale(&camPos, &camDir, 65.0f);
@@ -261,14 +259,14 @@ void minigame_loop(float deltatime)
     (float[3]){camTarget.v[0], camTarget.v[1] + 0.5f, camTarget.v[2]}
   );
 
-  float scale = 0.02f;
+  float scale = 0.1f;
 
   // update matrix for lights (crystal balls)
   for(int i=0; i<4; ++i)
   {
-    t3d_mat4fp_from_srt_euler(&matLightFP[i],
+    t3d_mat4fp_from_srt_euler(players[i].matLightFP,
       (float[]){scale, scale, scale},
-      (float[]){ fm_cosf(time * 2.0f), fm_sinf(time * 2.0f), fm_cosf(time * 2.0f)},
+      (float[3]){0.0f, -players[i].rotY, 0},
       (float[]){
         players[i].playerPos.v[0],
         players[i].playerPos.v[1] + getFloorHeight(&players[i].playerPos),

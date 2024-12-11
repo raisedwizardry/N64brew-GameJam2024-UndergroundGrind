@@ -8,6 +8,7 @@
 typedef struct
 {
     PlyNum plynum;
+	T3DMat4FP *matLightFP;
     T3DMat4FP *modelMatFP;
     rspq_block_t *dplSnake;
     color_t color;
@@ -35,6 +36,7 @@ void player_init(SnakePlayer *player, color_t color, T3DVec3 position, float rot
   	snakeModel = t3d_model_load("rom://undergroundgrind/snake.t3dm");
   	modelShadow = t3d_model_load("rom://undergroundgrind/shadow.t3dm");
     player->modelMatFP = malloc_uncached(sizeof(T3DMat4FP));
+    player->matLightFP = malloc_uncached(sizeof(T3DMat4FP));
 
     player->moveDir = (T3DVec3){{0,0,0}};
     player->playerPos = position;
@@ -65,8 +67,8 @@ void player_init(SnakePlayer *player, color_t color, T3DVec3 position, float rot
     t3d_model_draw_skinned(snakeModel, &player->skel); // as in the last example, draw skinned with the main skeleton
 
     rdpq_set_prim_color(RGBA32(0, 0, 0, 120));
-    t3d_model_draw(modelShadow);
-    t3d_matrix_pop(1);
+      t3d_model_draw(modelShadow);
+   	  t3d_matrix_pop(1);
     player->dplSnake = rspq_block_end();
 
     player->rotY = rotation;
