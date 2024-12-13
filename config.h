@@ -23,6 +23,6 @@
     #define SKIP_MINIGAMESELECTION  1
 
     // The current minigame you want to test
-    #define MINIGAME_TO_TEST  "undergroundgrind"
+    #define MINIGAME_TO_TEST  "junksnake"
 
 #endif

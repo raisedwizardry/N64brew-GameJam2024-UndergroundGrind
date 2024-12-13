@@ -24,6 +24,17 @@ const MinigameDef minigame_def = {
 #define TEXT_COLOR          0x6CBB3CFF
 #define TEXT_OUTLINE        0x30521AFF
 
+#define ATTACK_TIME_START   0.333f
+#define ATTACK_TIME_END     0.4f
+
+#define COUNTDOWN_DELAY     3.0f
+#define GO_DELAY            1.0f
+#define WIN_DELAY           5.0f
+#define WIN_SHOW_DELAY      2.0f
+
+#define BILLBOARD_YOFFSET   15.0f
+
+
 static float getFloorHeight(const T3DVec3 *pos) {
   // Usually you would have some collision / raycast for this
   // Here we just hardcode the floor height and the one stair
@@ -131,10 +142,10 @@ void minigame_init()
   dplMap = rspq_block_end();
 
   T3DVec3 startPositions[] = {
-    {{ 150.0f, 20.0f,   -5.0f}},
-    {{-150.0f, 20.0f,   -5.0f}},
-    {{   0.0f, 40.0f, -190.0f}},
-    {{   0.0f, 20.0f,   30.0f}},
+    (T3DVec3){{-100,0.15f,0}},
+    (T3DVec3){{0,0.15f,-100}},
+    (T3DVec3){{100,0.15f,0}},
+    (T3DVec3){{0,0.15f,100}},
   };
 
 
@@ -166,13 +177,156 @@ void player_draw(SnakePlayer *player)
     rspq_block_run(player->dplSnake);
 }
 
+void player_draw_billboard(SnakePlayer *player, PlyNum playerNum)
+{
+  T3DVec3 billboardPos = (T3DVec3){{
+    player->playerPos.v[0],
+    player->playerPos.v[1] + BILLBOARD_YOFFSET,
+    player->playerPos.v[2]
+  }};
+
+  T3DVec3 billboardScreenPos;
+  t3d_viewport_calc_viewspace_pos(&viewport, &billboardScreenPos, &billboardPos);
+
+  int x = floorf(billboardScreenPos.v[0]);
+  int y = floorf(billboardScreenPos.v[1]);
+
+  rdpq_sync_pipe(); // Hardware crashes otherwise
+  rdpq_sync_tile(); // Hardware crashes otherwise
+
+  rdpq_text_printf(&(rdpq_textparms_t){ .style_id = playerNum }, FONT_BILLBOARD, x-5, y-16, "P%d", playerNum+1);
+}
+
 bool player_has_control(SnakePlayer *player)
 {
   return countDownTimer < 0.0f;
 }
 
-void minigame_fixedloop(float deltatime)
+void player_fixedloop(SnakePlayer *player, float deltaTime, joypad_port_t port, bool is_human)
 {
+  float speed = 0.0f;
+  T3DVec3 newDir = {0};
+
+  if (player_has_control(player)) {
+    if (is_human) {
+      joypad_inputs_t joypad = joypad_get_inputs(port);
+
+      newDir.v[0] = (float)joypad.stick_x * 0.05f;
+      newDir.v[2] = -(float)joypad.stick_y * 0.05f;
+      speed = sqrtf(t3d_vec3_len2(&newDir));
+    } else {
+      SnakePlayer* target = &players[player->ai_target];
+      if (player->plynum != target->plynum) { // Check for a valid target
+        // Move towards the direction of the target
+        float dist, norm;
+        newDir.v[0] = (target->playerPos.v[0] - player->playerPos.v[0]);
+        newDir.v[2] = (target->playerPos.v[2] - player->playerPos.v[2]);
+        dist = sqrtf(newDir.v[0]*newDir.v[0] + newDir.v[2]*newDir.v[2]);
+        norm = 1/dist;
+        newDir.v[0] *= norm;
+        newDir.v[2] *= norm;
+        speed = 20;
+    
+        // Attack if close, and the reaction time has elapsed
+        if (dist < 25 && !player->isAttack) {
+          if (player->ai_reactionspeed <= 0) {
+            t3d_anim_set_playing(&player->animAttack, true);
+            t3d_anim_set_time(&player->animAttack, 0.0f);
+            player->isAttack = true;
+            player->attackTimer = 0;
+            player->ai_reactionspeed = (2-core_get_aidifficulty())*5 + rand()%((3-core_get_aidifficulty())*3);
+          } else {
+            player->ai_reactionspeed--;
+          }
+        }
+      } else {
+        player->ai_target = rand()%MAXPLAYERS; // (Attempt) to aquire a new target this frame
+      }
+    }
+  }
+
+  // Player movement
+  if(speed > 0.15f && !player->isAttack) {
+    newDir.v[0] /= speed;
+    newDir.v[2] /= speed;
+    player->moveDir = newDir;
+
+    float newAngle = atan2f(player->moveDir.v[0], player->moveDir.v[2]);
+    player->rotY = t3d_lerp_angle(player->rotY, newAngle, 0.5f);
+    player->currSpeed = t3d_lerp(player->currSpeed, speed * 0.3f, 0.15f);
+  } else {
+    player->currSpeed *= 0.64f;
+  }
+
+  // use blend based on speed for smooth transitions
+  player->animBlend = player->currSpeed / 0.51f;
+  if(player->animBlend > 1.0f)player->animBlend = 1.0f;
+
+  // move player...
+  player->playerPos.v[0] += player->moveDir.v[0] * player->currSpeed;
+  player->playerPos.v[2] += player->moveDir.v[2] * player->currSpeed;
+  // ...and limit position inside the box
+  const float BOX_SIZE = 140.0f;
+  if(player->playerPos.v[0] < -BOX_SIZE)player->playerPos.v[0] = -BOX_SIZE;
+  if(player->playerPos.v[0] >  BOX_SIZE)player->playerPos.v[0] =  BOX_SIZE;
+  if(player->playerPos.v[2] < -BOX_SIZE)player->playerPos.v[2] = -BOX_SIZE;
+  if(player->playerPos.v[2] >  BOX_SIZE)player->playerPos.v[2] =  BOX_SIZE;
+
+  if (player->isAttack) {
+    player->attackTimer += deltaTime;
+    if (player->attackTimer > ATTACK_TIME_START && player->attackTimer < ATTACK_TIME_END) {
+      //player_do_damage(player);
+    }
+  }
+}
+
+void minigame_fixedloop(float deltaTime)
+{
+  bool controlbefore = player_has_control(&players[0]);
+  uint32_t playercount = core_get_playercount();
+  for (size_t i = 0; i < MAXPLAYERS; i++)
+  {
+    player_fixedloop(&players[i], deltaTime, core_get_playercontroller(i), i < playercount);
+  }
+
+  if (countDownTimer > -GO_DELAY)
+  {
+    float prevCountDown = countDownTimer;
+    countDownTimer -= deltaTime;
+    if ((int)prevCountDown != (int)countDownTimer && countDownTimer >= 0)
+      wav64_play(&sfx_countdown, 31);
+  }
+  if (!controlbefore && player_has_control(&players[0]))
+    wav64_play(&sfx_start, 31);
+
+  if (!isEnding) {
+    // Determine if a player has won
+    uint32_t alivePlayers = 0;
+    PlyNum lastPlayer = 0;
+    for (size_t i = 0; i < MAXPLAYERS; i++)
+    {
+      if (players[i].isTreasureAquired)
+      {
+        alivePlayers++;
+        lastPlayer = i;
+      }
+    }
+    
+    if (alivePlayers == 1) {
+      isEnding = true;
+      winner = lastPlayer;
+      wav64_play(&sfx_stop, 31);
+    }
+  } else {
+    float prevEndTime = endTimer;
+    endTimer += deltaTime;
+    if ((int)prevEndTime != (int)endTimer && (int)endTimer == WIN_SHOW_DELAY)
+      wav64_play(&sfx_winner, 31);
+    if (endTimer > WIN_DELAY) {
+      core_set_winner(winner);
+      minigame_end();
+    }
+  }
 }
 
 void player_loop(SnakePlayer *player, float deltaTime, joypad_port_t port, bool is_human)

@@ -21,6 +21,7 @@ typedef struct
     T3DVec3 playerPos;
     float rotY;
     bool isAttack;
+    bool isTreasureAquired;
     float currSpeed;
     float animBlend;
     float attackTimer;
