@@ -17,12 +17,12 @@
     #define SKIP_DIFFICULTYSELECTION  1
 
     // The difficulty of the AI. 
-    #define AI_DIFFICULTY  DIFF_MEDIUM
+    #define AI_DIFFICULTY  DIFF_HARD
 
     // Skip the minigame selection and boot straight into MINIGAME_TO_TEST
     #define SKIP_MINIGAMESELECTION  1
 
     // The current minigame you want to test
-    #define MINIGAME_TO_TEST  "junksnake"
+    #define MINIGAME_TO_TEST  "undergroundgrind"
 
 #endif

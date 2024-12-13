@@ -5,9 +5,12 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="13b4c88a-f37c-4434-a0f8-dc68754cbcc5" name="Changes" comment="">
+      <change afterPath="$PROJECT_DIR$/code/undergroundgrind/dirtblock.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" beforeDir="false" afterPath="$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.c" beforeDir="false" afterPath="$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.mk" beforeDir="false" afterPath="$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.mk" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config.h" beforeDir="false" afterPath="$PROJECT_DIR$/config.h" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -15,6 +18,7 @@
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
+  <component name="ChangesViewManager" show_ignored="true" />
   <component name="DpaMonitoringSettings">
     <option name="firstShow" value="false" />
   </component>
@@ -24,11 +28,12 @@
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/code/junksnake/junksnake.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/code/setpoint/setpoint.c" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/code/snakeexample/snakeexample.c" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="mock:///Users/blackattack/development/github/N64brew-GameJam2024-UndergroundGrind/code/undergroundgrind/undergroundgrind.c" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.c" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/config.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/code/snakeexample/snakeexample.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/code/undergroundgrind/dirtblock.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/code/undergroundgrinddead/snakeplayer.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/code/undergroundgrinddead/undergroundgrinddead.c" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/config.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/core.c" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/core.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/main.c" root0="SKIP_HIGHLIGHTING" />
@@ -49,35 +54,35 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;ASKED_ADD_EXTERNAL_FILES&quot;: &quot;true&quot;,
-    &quot;Native Executable.Ares.executor&quot;: &quot;Run&quot;,
-    &quot;Native Executable.make and load (real n64).executor&quot;: &quot;Run&quot;,
-    &quot;Native Executable.make and run (ares from src).executor&quot;: &quot;Run&quot;,
-    &quot;Native Executable.make and run (local ares).executor&quot;: &quot;Run&quot;,
-    &quot;Native Executable.make and run.executor&quot;: &quot;Run&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;Shell Script.Unnamed.executor&quot;: &quot;Run&quot;,
-    &quot;Shell Script.attach.executor&quot;: &quot;Run&quot;,
-    &quot;Shell Script.make.executor&quot;: &quot;Run&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;main&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.keymap&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ASKED_ADD_EXTERNAL_FILES": "true",
+    "Native Executable.Ares.executor": "Run",
+    "Native Executable.make and load (real n64).executor": "Run",
+    "Native Executable.make and run (ares from src).executor": "Run",
+    "Native Executable.make and run (local ares).executor": "Run",
+    "Native Executable.make and run.executor": "Run",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "Shell Script.Unnamed.executor": "Run",
+    "Shell Script.attach.executor": "Run",
+    "Shell Script.make.executor": "Run",
+    "git-widget-placeholder": "reset-and-refocus",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.keymap",
+    "vue.rearranger.settings.migration": "true"
   }
-}</component>
+}]]></component>
   <component name="RecentsManager">
     <key name="CidrLocalAttachDebugger.recentlyUsed">
       <recent name="com.jetbrains.rider.cpp.debugger.RiderCppLLDBDriverConfiguration" />
     </key>
   </component>
-  <component name="RunManager" selected="Native Executable.make and load (real n64)">
+  <component name="RunManager" selected="Native Executable.make and run">
     <configuration name="make and load (real n64)" type="RunNativeExe" factoryName="Native Executable">
       <option name="EXE_PATH" value="$USER_HOME$/Applications/UNFLoader" />
       <option name="PROGRAM_PARAMETERS" value="gamejam2024.z64" />
@@ -194,7 +199,9 @@
       <workItem from="1733595921739" duration="803000" />
       <workItem from="1733706160922" duration="19890000" />
       <workItem from="1733793130519" duration="11124000" />
-      <workItem from="1733881555850" duration="22253000" />
+      <workItem from="1733881555850" duration="25755000" />
+      <workItem from="1734066341009" duration="60000" />
+      <workItem from="1734066419426" duration="4177000" />
     </task>
     <servers />
   </component>
