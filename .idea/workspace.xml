@@ -4,14 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="13b4c88a-f37c-4434-a0f8-dc68754cbcc5" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/assets/undergroundgrind/chest.blend" beforeDir="false" afterPath="$PROJECT_DIR$/assets/undergroundgrind/chest.blend" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" beforeDir="false" afterPath="$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.c" beforeDir="false" afterPath="$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.c" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/config.h" beforeDir="false" afterPath="$PROJECT_DIR$/config.h" afterDir="false" />
-    </list>
+    <list default="true" id="13b4c88a-f37c-4434-a0f8-dc68754cbcc5" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -200,7 +193,7 @@
       <workItem from="1733793130519" duration="11124000" />
       <workItem from="1733881555850" duration="25755000" />
       <workItem from="1734066341009" duration="60000" />
-      <workItem from="1734066419426" duration="43563000" />
+      <workItem from="1734066419426" duration="44113000" />
     </task>
     <servers />
   </component>
