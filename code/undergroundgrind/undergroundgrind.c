@@ -23,7 +23,7 @@ const MinigameDef minigame_def = {
 #define TEXT_COLOR          0x6CBB3CFF
 #define TEXT_OUTLINE        0x30521AFF
 
-#define HITBOX_RADIUS       10.f
+#define HITBOX_RADIUS       20.f
 
 #define ATTACK_OFFSET       10
 #define ATTACK_RADIUS       5.f
@@ -103,7 +103,7 @@ void minigame_init(void)
 
   t3d_init((T3DInitParams){});
 
-  font = rdpq_font_load("rom:/snake3d/m6x11plus.font64");
+  font = rdpq_font_load("rom:/undergroundgrind/m6x11plus.font64");
   rdpq_text_register_font(FONT_TEXT, font);
   rdpq_font_style(font, 0, &(rdpq_fontstyle_t){.color = color_from_packed32(TEXT_COLOR) });
 
@@ -193,7 +193,7 @@ void minigame_init(void)
   wav64_open(&sfx_countdown, "rom:/core/Countdown.wav64");
   wav64_open(&sfx_stop, "rom:/core/Stop.wav64");
   wav64_open(&sfx_winner, "rom:/core/Winner.wav64");
-  xm64player_open(&music, "rom:/snake3d/bottled_bubbles.xm64");
+  xm64player_open(&music, "rom:/undergroundgrind/bottled_bubbles.xm64");
   xm64player_play(&music, 0);
 }
 
@@ -201,26 +201,31 @@ void player_do_damage(SnakePlayer *player)
 {
   float s, c;
   fm_sincosf(player->rotY, &s, &c);
-  float attack_pos[] = {
+  float attackPosition[] = {
     player->playerPos.v[0] + s * ATTACK_OFFSET,
     player->playerPos.v[2] + c * ATTACK_OFFSET,
   };
 
-  for (size_t i = 0; i < MAXPLAYERS; i++)
+  for (size_t i = 0; i < TOTAL_BLOCKS; i++)
   {
-    SnakePlayer *other_player = &players[i];
-    //if (other_player == player || !other_player->isAlive) continue;
+    DirtBlock *block = &dirtBlocks[i];
+    if (block->isDestroyed) continue;
 
-    float pos_diff[] = {
-      other_player->playerPos.v[0] - attack_pos[0],
-      other_player->playerPos.v[2] - attack_pos[1],
+    float positionDifference[] = {
+      block->dirtBlockPos.v[0] - attackPosition[0],
+      block->dirtBlockPos.v[2] - attackPosition[1],
     };
 
-    float distance = sqrtf(pos_diff[0]*pos_diff[0] + pos_diff[1]*pos_diff[1]);
+    float distance = sqrtf(positionDifference[0]*positionDifference[0] + positionDifference[1]*positionDifference[1]);
 
-    //if (distance < (ATTACK_RADIUS + HITBOX_RADIUS)) {
-    //  other_player->isAlive = false;
-    //}
+    if (distance < (ATTACK_RADIUS + HITBOX_RADIUS)) {
+      block->damage += 100;
+    }
+
+    if (block->damage > 100) {
+      block->destroyingPlayer = player->plynum;
+	  block->isDestroyed = true;
+	} 
   }
 }
 
