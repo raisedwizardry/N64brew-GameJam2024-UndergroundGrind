@@ -5,10 +5,10 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="13b4c88a-f37c-4434-a0f8-dc68754cbcc5" name="Changes" comment="">
-      <change afterPath="$PROJECT_DIR$/code/undergroundgrind/dirtblock.h" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/undergroundgrind/one-by-one.blend" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/assets/undergroundgrind/one-by-one.glb" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" beforeDir="false" afterPath="$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/code/undergroundgrind/dirtblock.h" beforeDir="false" afterPath="$PROJECT_DIR$/code/undergroundgrind/dirtblock.h" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.c" beforeDir="false" afterPath="$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.c" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.mk" beforeDir="false" afterPath="$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.mk" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/config.h" beforeDir="false" afterPath="$PROJECT_DIR$/config.h" afterDir="false" />
@@ -29,7 +29,8 @@
     <setting file="file://$PROJECT_DIR$/code/junksnake/junksnake.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/code/setpoint/setpoint.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/code/snakeexample/snakeexample.c" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/code/undergroundgrind/dirtblock.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="mock:///Users/blackattack/development/github/N64brew-GameJam2024-UndergroundGrind/code/undergroundgrind/dirtblock.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/code/undergroundgrind/dirtblock.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/code/undergroundgrinddead/snakeplayer.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/code/undergroundgrinddead/undergroundgrinddead.c" root0="SKIP_HIGHLIGHTING" />
@@ -201,7 +202,7 @@
       <workItem from="1733793130519" duration="11124000" />
       <workItem from="1733881555850" duration="25755000" />
       <workItem from="1734066341009" duration="60000" />
-      <workItem from="1734066419426" duration="4177000" />
+      <workItem from="1734066419426" duration="17574000" />
     </task>
     <servers />
   </component>

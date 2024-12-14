@@ -17,7 +17,7 @@
     #define SKIP_DIFFICULTYSELECTION  1
 
     // The difficulty of the AI. 
-    #define AI_DIFFICULTY  DIFF_HARD
+    #define AI_DIFFICULTY  DIFF_EASY
 
     // Skip the minigame selection and boot straight into MINIGAME_TO_TEST
     #define SKIP_MINIGAMESELECTION  1

@@ -59,7 +59,7 @@ xm64player_t music;
 
 SnakePlayer players[MAXPLAYERS];
 
-DirtBlock dirtBlocks[25];
+DirtBlock dirtBlocks[9];
 
 float countDownTimer;
 bool isEnding;
@@ -121,7 +121,7 @@ void minigame_init(void)
   // Model Credits: Quaternius (CC0) https://quaternius.com/packs/easyenemy.html
   snakeModel = t3d_model_load("rom:/undergroundgrind/snake.t3dm");
 
-  dirtBlockModel = t3d_model_load("rom:/junksnake/one-by-one.t3dm");
+  dirtBlockModel = t3d_model_load("rom:/undergroundgrind/one-by-one.t3dm");
 
   rspq_block_begin();
     t3d_matrix_push(mapMatFP);
@@ -150,10 +150,15 @@ void minigame_init(void)
     players[i].plynum = i;
   }
 
-  for (size_t i = 0; i < blockGridSize; i++)
-  {
-    initDirtBlock(&dirtBlocks[i], dirtBlockModel,(float)i*20, (float)1.15f, (float)-10);
-  }
+  initDirtBlock(&dirtBlocks[0], dirtBlockModel, (float)40.0f, (float)0.0f, (float)40.0f);
+  initDirtBlock(&dirtBlocks[1], dirtBlockModel, (float)40.0f, (float)0.0f, (float)0.0f);
+  initDirtBlock(&dirtBlocks[2], dirtBlockModel, (float)40.0f, (float)0.0f, (float)-40.0f);
+  initDirtBlock(&dirtBlocks[3], dirtBlockModel, (float)0.0f, (float)0.0f, (float)40.0f);
+  initDirtBlock(&dirtBlocks[4], dirtBlockModel, (float)0.0f, (float)0.0f, (float)0.0f);
+  initDirtBlock(&dirtBlocks[5], dirtBlockModel, (float)0.0f, (float)0.0f, (float)-40.0f);
+  initDirtBlock(&dirtBlocks[6], dirtBlockModel, (float)-40.0f, (float)0.0f, (float)40.0f);
+  initDirtBlock(&dirtBlocks[7], dirtBlockModel, (float)-40.0f, (float)0.0f, (float)0.0f);
+  initDirtBlock(&dirtBlocks[8], dirtBlockModel, (float)-40.0f, (float)0.0f, (float)-40.0f);
 
   countDownTimer = COUNTDOWN_DELAY;
 
@@ -333,7 +338,7 @@ void player_draw(SnakePlayer *player)
 
 void dirtBlockDraw(DirtBlock *dirtBlock)
 {
-  rspq_block_run(dirtBlock->dplDirtBlock);
+    rspq_block_run(dirtBlock->dplDirtBlock);
 }
 
 void player_draw_billboard(SnakePlayer *player, PlyNum playerNum)
@@ -439,7 +444,7 @@ void minigame_loop(float deltaTime)
     player_draw(&players[i]);
   }
 
-  for (size_t i = 0; i < blockGridSize; i++)
+  for (size_t i = 0; i < 9; i++)
   {
     dirtBlockDraw(&dirtBlocks[i]);
   }
@@ -474,6 +479,11 @@ void minigame_cleanup(void)
   for (size_t i = 0; i < MAXPLAYERS; i++)
   {
     cleanupSnakePlayer(&players[i]);
+  }
+
+  for (size_t i = 0; i < 9; i++)
+  {
+    cleanupDirtBlock(&dirtBlocks[i]);
   }
 
   wav64_close(&sfx_start);
