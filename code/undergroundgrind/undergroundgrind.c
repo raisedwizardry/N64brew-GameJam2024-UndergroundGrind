@@ -9,12 +9,13 @@
 #include <t3d/t3ddebug.h>
 #include "./snakeplayer.h"
 #include "./dirtblock.h"
+#include "./chest.h"
 
 const MinigameDef minigame_def = {
   .gamename = "Underground Grind",
   .developername = "raisedwizardry",
-  .description = "Be the first one to find the treasure by grinding it out underground in a flat grid",
-  .instructions = "Tap A and Z in squence repeatedly to dig. Use the d pad to change digging directions"
+  .description = "Be the first one to find the treasure by grinding it out underground in a flat 3 x 3 grid",
+  .instructions = "Tap A and Z in squence repeatedly to dig. Use the d pad to move to the next block "
 };
 
 #define FONT_TEXT           1
@@ -34,6 +35,8 @@ const MinigameDef minigame_def = {
 #define GO_DELAY            1.0f
 #define WIN_DELAY           5.0f
 #define WIN_SHOW_DELAY      2.0f
+
+#define TOTAL_BLOCKS        9
 
 #define BILLBOARD_YOFFSET   15.0f
 
@@ -62,9 +65,9 @@ int chestBlockNumber;
 
 SnakePlayer players[MAXPLAYERS];
 
-DirtBlock dirtBlocks[9];
+DirtBlock dirtBlocks[TOTAL_BLOCKS];
 
-DirtBlock chest[1];
+Chest chests[1];
 
 float countDownTimer;
 bool isEnding;
@@ -81,7 +84,8 @@ rspq_syncpoint_t syncPoint;
 
 void minigame_init(void)
 {
-  chestBlockNumber = rand() % 9;
+  chestBlockNumber = rand() % TOTAL_BLOCKS;
+  
   int diff = core_get_aidifficulty();
   if (diff == DIFF_EASY) { blockGridSize = 3;}
   if (diff == DIFF_MEDIUM) { blockGridSize = 4;}
@@ -158,7 +162,7 @@ void minigame_init(void)
     players[i].plynum = i;
   }
 
-  T3DVec3 blockStartPositions[] = {
+  T3DVec3 blockPositions[] = {
   	(T3DVec3){{41.0f, 0.0f, 41.0f}},
   	(T3DVec3){{41.0f, 0.0f, 0.0f}},
 	(T3DVec3){{41.0f, 0.0f, -41.0f}},
@@ -172,18 +176,14 @@ void minigame_init(void)
 
   float blockScale = 0.5f;
   
-  initDirtBlock(&dirtBlocks[0], dirtBlockModel, blockScale, blockStartPositions[0]);
-  initDirtBlock(&dirtBlocks[1], dirtBlockModel, blockScale, blockStartPositions[1]);
-  initDirtBlock(&dirtBlocks[2], dirtBlockModel, blockScale, blockStartPositions[2]);
-  initDirtBlock(&dirtBlocks[3], dirtBlockModel, blockScale, blockStartPositions[3]);
-  initDirtBlock(&dirtBlocks[4], dirtBlockModel, blockScale, blockStartPositions[4]);
-  initDirtBlock(&dirtBlocks[5], dirtBlockModel, blockScale, blockStartPositions[5]);
-  initDirtBlock(&dirtBlocks[6], dirtBlockModel, blockScale, blockStartPositions[6]);
-  initDirtBlock(&dirtBlocks[7], dirtBlockModel, blockScale, blockStartPositions[7]);
-  initDirtBlock(&dirtBlocks[8], dirtBlockModel, blockScale, blockStartPositions[8]);
-  initDirtBlock(&chest[0], chestModel, 0.4f, blockStartPositions[chestBlockNumber]);
-  dirtBlocks[4].isDestroyed = true;
-  dirtBlocks[chestBlockNumber].isDestroyed = true;
+  for (size_t i = 0; i < TOTAL_BLOCKS; i++)
+  {
+  	initDirtBlock(&dirtBlocks[i], dirtBlockModel, blockScale, RGBA32(255, 0, 0, 255), blockPositions[i]);
+  }
+
+  initChest(&chests[0], chestModel, 0.4f, RGBA32(255, 0, 0, 255), blockPositions[chestBlockNumber], chestBlockNumber);
+
+  //dirtBlocks[chestBlockNumber].isDestroyed = true;
   dirtBlocks[chestBlockNumber].isContainingChest = true;
   
   countDownTimer = COUNTDOWN_DELAY;
@@ -199,11 +199,6 @@ void minigame_init(void)
 
 void player_do_damage(SnakePlayer *player)
 {
-  if (!player->isAlive) {
-    // Prevent edge cases
-    return;
-  }
-
   float s, c;
   fm_sincosf(player->rotY, &s, &c);
   float attack_pos[] = {
@@ -214,7 +209,7 @@ void player_do_damage(SnakePlayer *player)
   for (size_t i = 0; i < MAXPLAYERS; i++)
   {
     SnakePlayer *other_player = &players[i];
-    if (other_player == player || !other_player->isAlive) continue;
+    //if (other_player == player || !other_player->isAlive) continue;
 
     float pos_diff[] = {
       other_player->playerPos.v[0] - attack_pos[0],
@@ -223,15 +218,15 @@ void player_do_damage(SnakePlayer *player)
 
     float distance = sqrtf(pos_diff[0]*pos_diff[0] + pos_diff[1]*pos_diff[1]);
 
-    if (distance < (ATTACK_RADIUS + HITBOX_RADIUS)) {
-      other_player->isAlive = false;
-    }
+    //if (distance < (ATTACK_RADIUS + HITBOX_RADIUS)) {
+    //  other_player->isAlive = false;
+    //}
   }
 }
 
 bool player_has_control(SnakePlayer *player)
 {
-  return player->isAlive && countDownTimer < 0.0f;
+  return countDownTimer < 0.0f;
 }
 
 void player_fixedloop(SnakePlayer *player, float deltaTime, joypad_port_t port, bool is_human)
@@ -247,12 +242,12 @@ void player_fixedloop(SnakePlayer *player, float deltaTime, joypad_port_t port, 
       newDir.v[2] = -(float)joypad.stick_y * 0.05f;
       speed = sqrtf(t3d_vec3_len2(&newDir));
     } else {
-      SnakePlayer* target = &players[player->ai_target];
-      if (player->plynum != target->plynum && target->isAlive) { // Check for a valid target
+      DirtBlock* target = &dirtBlocks[player->ai_target];
+      if (!target->isDestroyed) { // Check for a valid target
         // Move towards the direction of the target
         float dist, norm;
-        newDir.v[0] = (target->playerPos.v[0] - player->playerPos.v[0]);
-        newDir.v[2] = (target->playerPos.v[2] - player->playerPos.v[2]);
+        newDir.v[0] = (target->dirtBlockPos.v[0] - player->playerPos.v[0]);
+        newDir.v[2] = (target->dirtBlockPos.v[2] - player->playerPos.v[2]);
         dist = sqrtf(newDir.v[0]*newDir.v[0] + newDir.v[2]*newDir.v[2]);
         norm = 1/dist;
         newDir.v[0] *= norm;
@@ -272,7 +267,7 @@ void player_fixedloop(SnakePlayer *player, float deltaTime, joypad_port_t port, 
           }
         }
       } else {
-        player->ai_target = rand()%MAXPLAYERS; // (Attempt) to aquire a new target this frame
+        player->ai_target = rand() % 9; // (Attempt) to aquire a new target this frame
       }
     }
   }
@@ -357,9 +352,7 @@ void player_loop(SnakePlayer *player, float deltaTime, joypad_port_t port, bool 
 
 void player_draw(SnakePlayer *player)
 {
-  if (player->isAlive) {
-    rspq_block_run(player->dplSnake);
-  }
+  rspq_block_run(player->dplSnake);
 }
 
 void dirtBlockDraw(DirtBlock *dirtBlock)
@@ -369,14 +362,12 @@ void dirtBlockDraw(DirtBlock *dirtBlock)
   }
 
   if (dirtBlock->isDestroyed && dirtBlock->isContainingChest) {
-    rspq_block_run(chest[0].dplDirtBlock);
+    rspq_block_run(chests[0].dplChestBlock);
   }
 }
 
 void player_draw_billboard(SnakePlayer *player, PlyNum playerNum)
 {
-  if (!player->isAlive) return;
-
   T3DVec3 billboardPos = (T3DVec3){{
     player->playerPos.v[0],
     player->playerPos.v[1] + BILLBOARD_YOFFSET,
@@ -416,18 +407,16 @@ void minigame_fixedloop(float deltaTime)
 
   if (!isEnding) {
     // Determine if a player has won
-    uint32_t alivePlayers = 0;
-    PlyNum lastPlayer = 0;
-    for (size_t i = 0; i < MAXPLAYERS; i++)
+    PlyNum lastPlayer = -1;
+    for (size_t i = 0; i < TOTAL_BLOCKS; i++)
     {
-      if (players[i].isAlive)
+      if (dirtBlocks[i].isDestroyed && dirtBlocks[i].isContainingChest)
       {
-        alivePlayers++;
-        lastPlayer = i;
+        lastPlayer = dirtBlocks[i].destroyingPlayer;
       }
     }
     
-    if (alivePlayers == 1) {
+    if (lastPlayer != -1) {
       isEnding = true;
       winner = lastPlayer;
       wav64_play(&sfx_stop, 31);
@@ -476,7 +465,7 @@ void minigame_loop(float deltaTime)
     player_draw(&players[i]);
   }
 
-  for (size_t i = 0; i < 9; i++)
+  for (size_t i = 0; i < TOTAL_BLOCKS; i++)
   {
     dirtBlockDraw(&dirtBlocks[i]);
   }
@@ -513,9 +502,14 @@ void minigame_cleanup(void)
     cleanupSnakePlayer(&players[i]);
   }
 
-  for (size_t i = 0; i < 9; i++)
+  for (size_t i = 0; i < TOTAL_BLOCKS; i++)
   {
     cleanupDirtBlock(&dirtBlocks[i]);
+  }
+  
+  for (size_t i = 0; i < 1; i++)
+  {
+    cleanupChest(&chests[i]);
   }
 
   wav64_close(&sfx_start);

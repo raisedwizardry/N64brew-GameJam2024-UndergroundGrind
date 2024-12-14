@@ -21,7 +21,6 @@ typedef struct
   float currSpeed;
   float animBlend;
   bool isAttack;
-  bool isAlive;
   float attackTimer;
   PlyNum ai_target;
   int ai_reactionspeed;
@@ -69,8 +68,7 @@ void initSnakePlayer(SnakePlayer *player, color_t color, T3DVec3 position, float
   player->currSpeed = 0.0f;
   player->animBlend = 0.0f;
   player->isAttack = false;
-  player->isAlive = true;
-  player->ai_target = rand()%MAXPLAYERS;
+  player->ai_target = rand() % 9;
   player->ai_reactionspeed = (2-core_get_aidifficulty())*5 + rand()%((3-core_get_aidifficulty())*3);
 }
 
