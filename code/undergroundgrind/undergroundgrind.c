@@ -15,7 +15,7 @@ const MinigameDef minigame_def = {
   .gamename = "Underground Grind",
   .developername = "raisedwizardry",
   .description = "Find the treasure by grinding it out underground in a flat 3 x 3 grid",
-  .instructions = "Tap A and Z in squence repeatedly to dig. Use the d pad to move to the next block "
+  .instructions = "Press A and Z in squence to dig through the blocks. Use the control stick move around"
 };
 
 #define FONT_TEXT           1
@@ -183,7 +183,6 @@ void minigame_init(void)
 
   initChest(&chests[0], chestModel, 0.4f, RGBA32(255, 0, 0, 255), blockPositions[chestBlockNumber], chestBlockNumber);
 
-  //dirtBlocks[chestBlockNumber].isDestroyed = true;
   dirtBlocks[chestBlockNumber].isContainingChest = true;
   
   countDownTimer = COUNTDOWN_DELAY;
