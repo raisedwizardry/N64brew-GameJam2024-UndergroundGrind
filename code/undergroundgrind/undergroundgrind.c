@@ -52,14 +52,19 @@ T3DModel *snakeModel;
 T3DModel *shadowModel;
 T3DModel *modelMap;
 T3DModel *dirtBlockModel;
+T3DModel *chestModel;
 T3DVec3 camPos;
 T3DVec3 camTarget;
 T3DVec3 lightDirVec;
 xm64player_t music;
 
+int chestBlockNumber;
+
 SnakePlayer players[MAXPLAYERS];
 
 DirtBlock dirtBlocks[9];
+
+DirtBlock chest[1];
 
 float countDownTimer;
 bool isEnding;
@@ -76,6 +81,7 @@ rspq_syncpoint_t syncPoint;
 
 void minigame_init(void)
 {
+  chestBlockNumber = rand() % 9;
   int diff = core_get_aidifficulty();
   if (diff == DIFF_EASY) { blockGridSize = 3;}
   if (diff == DIFF_MEDIUM) { blockGridSize = 4;}
@@ -120,8 +126,10 @@ void minigame_init(void)
 
   // Model Credits: Quaternius (CC0) https://quaternius.com/packs/easyenemy.html
   snakeModel = t3d_model_load("rom:/undergroundgrind/snake.t3dm");
-
+  
   dirtBlockModel = t3d_model_load("rom:/undergroundgrind/one-by-one.t3dm");
+
+  chestModel = t3d_model_load("rom:/undergroundgrind/chest.t3dm");
 
   rspq_block_begin();
     t3d_matrix_push(mapMatFP);
@@ -150,16 +158,34 @@ void minigame_init(void)
     players[i].plynum = i;
   }
 
-  initDirtBlock(&dirtBlocks[0], dirtBlockModel, (float)40.0f, (float)0.0f, (float)40.0f);
-  initDirtBlock(&dirtBlocks[1], dirtBlockModel, (float)40.0f, (float)0.0f, (float)0.0f);
-  initDirtBlock(&dirtBlocks[2], dirtBlockModel, (float)40.0f, (float)0.0f, (float)-40.0f);
-  initDirtBlock(&dirtBlocks[3], dirtBlockModel, (float)0.0f, (float)0.0f, (float)40.0f);
-  initDirtBlock(&dirtBlocks[4], dirtBlockModel, (float)0.0f, (float)0.0f, (float)0.0f);
-  initDirtBlock(&dirtBlocks[5], dirtBlockModel, (float)0.0f, (float)0.0f, (float)-40.0f);
-  initDirtBlock(&dirtBlocks[6], dirtBlockModel, (float)-40.0f, (float)0.0f, (float)40.0f);
-  initDirtBlock(&dirtBlocks[7], dirtBlockModel, (float)-40.0f, (float)0.0f, (float)0.0f);
-  initDirtBlock(&dirtBlocks[8], dirtBlockModel, (float)-40.0f, (float)0.0f, (float)-40.0f);
+  T3DVec3 blockStartPositions[] = {
+  	(T3DVec3){{41.0f, 0.0f, 41.0f}},
+  	(T3DVec3){{41.0f, 0.0f, 0.0f}},
+	(T3DVec3){{41.0f, 0.0f, -41.0f}},
+	(T3DVec3){{0.0f, 0.0f, 41.0f}},
+	(T3DVec3){{0.0f, 0.0f, 0.0f}},
+	(T3DVec3){{0.0f, 0.0f, -41.0f}},
+	(T3DVec3){{-41.0f, 0.0f, 41.0f}},
+	(T3DVec3){{-41.0f, 0.0f, 0.0f}},
+	(T3DVec3){{-41.0f, 0.0f, -41.0f}}
+  };
 
+  float blockScale = 0.5f;
+  
+  initDirtBlock(&dirtBlocks[0], dirtBlockModel, blockScale, blockStartPositions[0]);
+  initDirtBlock(&dirtBlocks[1], dirtBlockModel, blockScale, blockStartPositions[1]);
+  initDirtBlock(&dirtBlocks[2], dirtBlockModel, blockScale, blockStartPositions[2]);
+  initDirtBlock(&dirtBlocks[3], dirtBlockModel, blockScale, blockStartPositions[3]);
+  initDirtBlock(&dirtBlocks[4], dirtBlockModel, blockScale, blockStartPositions[4]);
+  initDirtBlock(&dirtBlocks[5], dirtBlockModel, blockScale, blockStartPositions[5]);
+  initDirtBlock(&dirtBlocks[6], dirtBlockModel, blockScale, blockStartPositions[6]);
+  initDirtBlock(&dirtBlocks[7], dirtBlockModel, blockScale, blockStartPositions[7]);
+  initDirtBlock(&dirtBlocks[8], dirtBlockModel, blockScale, blockStartPositions[8]);
+  initDirtBlock(&chest[0], chestModel, 0.4f, blockStartPositions[chestBlockNumber]);
+  dirtBlocks[4].isDestroyed = true;
+  dirtBlocks[chestBlockNumber].isDestroyed = true;
+  dirtBlocks[chestBlockNumber].isContainingChest = true;
+  
   countDownTimer = COUNTDOWN_DELAY;
 
   syncPoint = 0;
@@ -338,7 +364,13 @@ void player_draw(SnakePlayer *player)
 
 void dirtBlockDraw(DirtBlock *dirtBlock)
 {
-    rspq_block_run(dirtBlock->dplDirtBlock);
+  if (!dirtBlock->isDestroyed) {
+  	rspq_block_run(dirtBlock->dplDirtBlock);
+  }
+
+  if (dirtBlock->isDestroyed && dirtBlock->isContainingChest) {
+    rspq_block_run(chest[0].dplDirtBlock);
+  }
 }
 
 void player_draw_billboard(SnakePlayer *player, PlyNum playerNum)
@@ -497,6 +529,7 @@ void minigame_cleanup(void)
   t3d_model_free(snakeModel);
   t3d_model_free(modelMap);
   t3d_model_free(shadowModel);
+  t3d_model_free(chestModel);
   t3d_model_free(dirtBlockModel);
 
   free_uncached(mapMatFP);

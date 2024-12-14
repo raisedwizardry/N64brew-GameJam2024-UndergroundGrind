@@ -15,11 +15,11 @@ typedef struct
     T3DVec3 dirtBlockPos;
 } DirtBlock;
 
-void initDirtBlock(DirtBlock *dirtBlock, T3DModel *dirtBlockModel, float placementX, float placementZ, float placementY)
+void initDirtBlock(DirtBlock *dirtBlock, T3DModel *dirtBlockModel, float blockScale, T3DVec3 position)
 {
     dirtBlock->blockMatFP = malloc_uncached(sizeof(T3DMat4FP));
-    float blockScale = 0.6f;
-    t3d_mat4fp_from_srt_euler(dirtBlock->blockMatFP, (float[3]){blockScale, blockScale, blockScale}, (float[3]){0, 0, 0}, (float[3]){placementX, placementZ, placementY});
+
+    t3d_mat4fp_from_srt_euler(dirtBlock->blockMatFP, (float[3]){blockScale, blockScale, blockScale}, (float[3]){0, 0, 0}, position.v);
 
     rspq_block_begin();
       t3d_matrix_push(dirtBlock->blockMatFP);
