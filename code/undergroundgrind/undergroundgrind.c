@@ -14,7 +14,7 @@
 const MinigameDef minigame_def = {
   .gamename = "Underground Grind",
   .developername = "raisedwizardry",
-  .description = "Be the first one to find the treasure by grinding it out underground in a flat 3 x 3 grid",
+  .description = "Find the treasure by grinding it out underground in a flat 3 x 3 grid",
   .instructions = "Tap A and Z in squence repeatedly to dig. Use the d pad to move to the next block "
 };
 
@@ -23,7 +23,7 @@ const MinigameDef minigame_def = {
 #define TEXT_COLOR          0x6CBB3CFF
 #define TEXT_OUTLINE        0x30521AFF
 
-#define HITBOX_RADIUS       20.f
+#define HITBOX_RADIUS       19.f
 
 #define ATTACK_OFFSET       10
 #define ATTACK_RADIUS       5.f
@@ -219,7 +219,7 @@ void player_do_damage(SnakePlayer *player)
     float distance = sqrtf(positionDifference[0]*positionDifference[0] + positionDifference[1]*positionDifference[1]);
 
     if (distance < (ATTACK_RADIUS + HITBOX_RADIUS)) {
-      block->damage += 100;
+      block->damage = block->damage + 13 + player->comboBonus;
     }
 
     if (block->damage > 100) {
@@ -321,12 +321,35 @@ void player_loop(SnakePlayer *player, float deltaTime, joypad_port_t port, bool 
     if (btn.start) minigame_end();
 
     // Player Dig
-    if((btn.a || btn.b) && !player->animAttack.isPlaying) {
+    if ((((btn.z) && player->previousButtonPressed == btn.a) || ((btn.a) && player->previousButtonPressed == btn.z))  && !player->animAttack.isPlaying) {
       t3d_anim_set_playing(&player->animAttack, true);
       t3d_anim_set_time(&player->animAttack, 0.0f);
       player->isAttack = true;
       player->attackTimer = 0;
+      if (btn.a) {
+        player->previousButtonPressed = btn.a;
+      }
+      if (btn.z) {
+        player->previousButtonPressed = btn.z;
+      }
+      player->comboBonus = 15;
     }
+    if ((btn.z || btn.a) && !player->animAttack.isPlaying) {
+      t3d_anim_set_playing(&player->animAttack, true);
+      t3d_anim_set_time(&player->animAttack, 0.0f);
+      player->isAttack = true;
+      player->attackTimer = 0;
+      player->previousButtonPressed = btn.z;
+      player->comboBonus = 0;
+    }
+
+    if((btn.b) && !player->animJump.isPlaying) {
+      t3d_anim_set_playing(&player->animJump, true);
+      t3d_anim_set_time(&player->animJump, 0.0f);
+      player->isJump = true;
+      player->jumpTimer = 0;
+    }
+
   }
   
   // Update the animation and modify the skeleton, this will however NOT recalculate the matrices
@@ -337,6 +360,11 @@ void player_loop(SnakePlayer *player, float deltaTime, joypad_port_t port, bool 
   if(player->isAttack) {
     t3d_anim_update(&player->animAttack, deltaTime); // attack animation now overrides the idle one
     if(!player->animAttack.isPlaying)player->isAttack = false;
+  }
+
+  if(player->isJump) {
+    t3d_anim_update(&player->animJump, deltaTime); // attack animation now overrides the idle one
+    if(!player->animJump.isPlaying)player->isJump = false;
   }
 
   // We now blend the walk animation with the idle/attack one

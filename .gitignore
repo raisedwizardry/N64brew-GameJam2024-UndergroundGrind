@@ -8,15 +8,3 @@ filesystem/
 *.blend[0-9]
 
 .DS_Store
-
-/assets/junksnake/*
-/assets/snake3d/*
-/assets/setpoint/*
-/assets/snakeexample/*
-/assets/undergroundgrinddead/*
-
-/code/junksnake/*
-/code/snake3d/*
-/code/setpoint/*
-/code/snakeexample/*
-/code/undergroundgrinddead/*

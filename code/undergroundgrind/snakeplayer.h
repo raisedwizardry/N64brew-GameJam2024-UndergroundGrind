@@ -13,6 +13,7 @@ typedef struct
   T3DAnim animAttack;
   T3DAnim animWalk;
   T3DAnim animIdle;
+  T3DAnim animJump;
   T3DSkeleton skelBlend;
   T3DSkeleton skel;
   T3DVec3 moveDir;
@@ -21,7 +22,12 @@ typedef struct
   float currSpeed;
   float animBlend;
   bool isAttack;
+  bool isJump;
+  char previousButtonPressed;
   float attackTimer;
+  float jumpTimer;
+  int comboBonus;
+  float comboTimer;
   PlyNum ai_target;
   int ai_reactionspeed;
 } SnakePlayer;
@@ -43,6 +49,11 @@ void initSnakePlayer(SnakePlayer *player, color_t color, T3DVec3 position, float
   // Note that tiny3d internally keeps no track of animations, it's up to the user to manage and play them.
   player->animIdle = t3d_anim_create(snakeModel, "Snake_Idle");
   t3d_anim_attach(&player->animIdle, &player->skel); // tells the animation which skeleton to modify
+  
+  player->animJump = t3d_anim_create(snakeModel, "Snake_Jump");
+  t3d_anim_set_looping(&player->animJump, false); // don't loop this animation
+  t3d_anim_set_playing(&player->animJump, false); // start in a paused state
+  t3d_anim_attach(&player->animJump, &player->skel); // tells the animation which skeleton to modify
 
   player->animWalk = t3d_anim_create(snakeModel, "Snake_Walk");
   t3d_anim_attach(&player->animWalk, &player->skelBlend);
@@ -68,6 +79,7 @@ void initSnakePlayer(SnakePlayer *player, color_t color, T3DVec3 position, float
   player->currSpeed = 0.0f;
   player->animBlend = 0.0f;
   player->isAttack = false;
+  player->isJump = false;
   player->ai_target = rand() % 9;
   player->ai_reactionspeed = (2-core_get_aidifficulty())*5 + rand()%((3-core_get_aidifficulty())*3);
 }
@@ -82,6 +94,7 @@ void cleanupSnakePlayer(SnakePlayer *player)
   t3d_anim_destroy(&player->animIdle);
   t3d_anim_destroy(&player->animWalk);
   t3d_anim_destroy(&player->animAttack);
+  t3d_anim_destroy(&player->animJump);
 
   free_uncached(player->modelMatFP);
 }
