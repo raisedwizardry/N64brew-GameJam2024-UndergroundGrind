@@ -68,11 +68,10 @@ $(HALCYON_ASSETS)/platform2.t3dm: T3DM_FLAGS = --base-scale=1
 $(HALCYON_ASSETS)/cloud_base.t3dm: T3DM_FLAGS = --base-scale=1
 
 # audioconv flags
-$(HALCYON_ASSETS)/hexagone.wav64: AUDIOCONV_FLAGS = --wav-compress=3
-$(HALCYON_ASSETS)/sky_high.xm64: AUDIOCONV_FLAGS = ''
-$(HALCYON_ASSETS)/stones-falling.wav64: AUDIOCONV_FLAGS = --wav-compress=3 --wav-mono
-$(HALCYON_ASSETS)/strong_wind_blowing.wav64: AUDIOCONV_FLAGS = --wav-compress=3 --wav-mono
-$(HALCYON_ASSETS)/grunt-01.wav64: AUDIOCONV_FLAGS = --wav-compress=3 --wav-mono
+$(HALCYON_SOUND_DIR)/hexagone.wav64: AUDIOCONV_FLAGS += --wav-resample 16000 --wav-compress 1
+$(HALCYON_SOUND_DIR)/stones-falling.wav64: AUDIOCONV_FLAGS += --wav-mono --wav-compress 1
+$(HALCYON_SOUND_DIR)/strong_wind_blowing.wav64: AUDIOCONV_FLAGS += --wav-mono --wav-compress 1
+$(HALCYON_SOUND_DIR)/grunt-01.wav64: AUDIOCONV_FLAGS += --wav-mono --wav-compress 1
 
 
 # font64 flags
