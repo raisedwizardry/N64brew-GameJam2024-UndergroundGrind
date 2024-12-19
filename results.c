@@ -19,6 +19,7 @@ The file contains the results screen
 #define TEXT_DELAY              0.7f
 #define POINTS_DELAY            1.5f
 #define POINTS_DURATION         0.3f
+#define POINTS_SFX_DELAY        1.25f
 #define CONFIRM_DELAY           2.0f
 #define ANNOUNCE_DELAY          3.0f
 #define FADE_OUT_DURATION       0.6f
@@ -35,6 +36,9 @@ static sprite_t *bg_gradient;
 static sprite_t *btn_game;
 static sprite_t *icon_player;
 static sprite_t *icon_star;
+
+static wav64_t sfx_point;
+static bool point_sfx_played;
 
 static float time;
 
@@ -113,6 +117,9 @@ void results_init()
     btn_game = sprite_load("rom:/btnGame.i4.sprite");
     icon_player = sprite_load("rom:/iconPly.ia8.sprite");
     icon_star = sprite_load("rom:/iconStar.ia8.sprite");
+
+    wav64_open(&sfx_point, "rom:/core/Point.wav64");
+    point_sfx_played = false;
 
     time = 0;
     fading_out = false;
@@ -211,6 +218,11 @@ void results_loop(float deltatime)
 
     bool can_confirm = time - confirm_start > CONFIRM_DELAY;
     bool is_announcing = ending && time > ANNOUNCE_DELAY;
+
+    if (time > POINTS_SFX_DELAY && !point_sfx_played) {
+        wav64_play(&sfx_point, 16);
+        point_sfx_played = true;
+    }
 
     // Box background
     int rect_width = 260;
@@ -396,5 +408,6 @@ void results_cleanup()
     sprite_free(btn_game);
     sprite_free(icon_player);
     sprite_free(icon_star);
+    wav64_close(&sfx_point);
     display_close();
 }
