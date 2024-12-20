@@ -106,6 +106,7 @@ float bgColorG;
 float bgColorB;
 bool colorFadeDown;
 bool gameEnded;
+float endTimer;
 int holds;
 float countDownTimer;
 bool playMusic;
@@ -675,11 +676,6 @@ void minigame_loop(float deltatime)
             {
                 rdpq_text_printf(&textparms, FONT_TEXT, offsetX, offsetY + i * plaeryUiGap + textGap, "OUT!");
             }
-            
-            if(joypad.btn.start)
-            {
-                minigame_end();
-            }
         }
         else
         {
@@ -752,6 +748,7 @@ void minigame_loop(float deltatime)
     if(playerAlive <= 1 && !gameEnded)
     {
         gameEnded = true;
+        endTimer = 5.0f;
         wav64_close(&sfx_music);
 
         if(playerAlive > 0)
@@ -775,7 +772,11 @@ void minigame_loop(float deltatime)
     // Update target
     if(gameEnded)
     {
-        rdpq_text_printf(&textparms, FONT_TEXT, offsetX, 206, "Press START to return");
+        endTimer -= deltatime;
+        if (endTimer < 0.0f)
+        {
+            minigame_end();
+        }
     }
     else
     {
