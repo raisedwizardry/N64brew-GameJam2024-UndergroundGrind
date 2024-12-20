@@ -436,7 +436,7 @@ void lake_init() {
 
   winners_mask = 0;
   banner_str[0] = 0;
-  min_time_before_exiting = 3.f;
+  min_time_before_exiting = 6.f;
 
   snow_particle_source.render = true;
   snow_particle_source.time_to_fall = 5.f;
@@ -504,12 +504,15 @@ void lake_dynamic_loop_pre(float delta_time) {
       min_time_before_exiting -= delta_time;
     }
     else {
+      /* Game should exit automatically and not require inputs
       for (size_t i = 0; i < core_get_playercount(); i++) {
         size_t c = core_get_playercontroller(i);
         if (pressed[c].a || pressed[c].b) {
           lake_stage++;
         }
       }
+      */
+      lake_stage++;
     }
   }
 
