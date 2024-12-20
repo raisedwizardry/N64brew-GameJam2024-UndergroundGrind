@@ -673,12 +673,12 @@ void UI_Menu_RenderPlayingUI(AppData* _appData){
 
     if(gameplayData->countdownTimer <= 0){
         gameplayData->gameState = GAME_STATE_GAME_OVER_LOSE;
-        gameplayData->countdownTimer = COUNT_DOWN_TIME;
+        gameplayData->countdownTimer = QUIT_TIME;
     }
 
     if(gameplayData->godEatCount == GODS_EAT_COUNT){
         gameplayData->gameState = GAME_STATE_GAME_OVER_WIN;
-        gameplayData->countdownTimer = COUNT_DOWN_TIME;
+        gameplayData->countdownTimer = QUIT_TIME;
     }
 
     // detect start button pressed by any player
@@ -743,8 +743,16 @@ void UI_Menu_RenderGameOverScreen(AppData* _appData ){
         isDeclaredWinner = TRUE;
         isMusicPlaying = FALSE;
     }
-   
     
+    AF_Time* time = &_appData->gameTime;
+    gameplayData->countdownTimer -= time->timeSinceLastFrame;
+    if (gameplayData->countdownTimer <= 0){
+        gameplayData->gameState = GAME_STATE_GAME_END;
+        core_set_winner(playerWithHighestScore);
+        minigame_end(); 
+    }
+    
+    /* Game should exit automatically and not require inputs
     for(int i = 0; i < PLAYER_COUNT; ++i){
         // detect start button pressed to restart the game
         if(_appData->input.keys[i][A_KEY].pressed == TRUE){
@@ -761,6 +769,7 @@ void UI_Menu_RenderGameOverScreen(AppData* _appData ){
             minigame_end(); 
         }
     }
+    */
 }
 
 
