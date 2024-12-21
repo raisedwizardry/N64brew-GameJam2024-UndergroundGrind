@@ -28,7 +28,7 @@ DSO_LIST = $(addprefix $(MINIGAMEDSO_DIR)/, $(addsuffix .dso, $(MINIGAMES_LIST))
 
 IMAGE_LIST = $(wildcard $(ASSETS_DIR)/*.png) $(wildcard $(ASSETS_DIR)/core/*.png)
 FONT_LIST  = $(wildcard $(ASSETS_DIR)/*.ttf)
-MODEL_LIST  = $(wildcard $(ASSETS_DIR)/*.glb)
+MODEL_LIST  = $(wildcard $(ASSETS_DIR)/*.glb) $(wildcard $(ASSETS_DIR)/core/*.glb)
 SOUND_LIST  = $(wildcard $(ASSETS_DIR)/*.wav) $(wildcard $(ASSETS_DIR)/core/*.wav)
 SOUND2_LIST  = $(wildcard $(ASSETS_DIR)/*.mp3) $(wildcard $(ASSETS_DIR)/core/*.mp3)
 MUSIC_LIST  = $(wildcard $(ASSETS_DIR)/*.xm)
