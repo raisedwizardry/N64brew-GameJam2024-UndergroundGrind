@@ -177,8 +177,8 @@ void set_menu_screen(menu_screen screen)
  * @param gradient gradient on the Y axis
  * @param offset scroll offset
  */
-void menu_draw_bg(sprite_t* pattern, sprite_t* gradient, float offset)
-{ 
+static void menu_draw_bg(sprite_t* pattern, sprite_t* gradient, float offset)
+{
   rdpq_set_mode_standard();
   rdpq_mode_begin();
     rdpq_mode_blender(0);
@@ -214,8 +214,7 @@ void menu_draw_bg(sprite_t* pattern, sprite_t* gradient, float offset)
 void menu_init()
 {
     time = 0.0f;
-    difficulty = AI_DIFFICULTY;
-    playercount = PLAYER_COUNT;
+
     BLACK = RGBA32(0x00,0x00,0x00,0xFF);
     ASH_GRAY = RGBA32(0xAD,0xBA,0xBD,0xFF);
     MAYA_BLUE = RGBA32(0x6C,0xBE,0xED,0xFF);
@@ -233,9 +232,17 @@ void menu_init()
 
     display_init(RESOLUTION_320x240, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
 
-    core_set_aidifficulty(difficulty);
-    core_set_playercount(playercount);
-    results_set_points_to_win(3);
+    if(is_first_time) {
+      difficulty = AI_DIFFICULTY;  
+      playercount = 0;
+      for (int i = 0; i < MAXPLAYERS; i++) {
+        if(joypad_is_connected(i))playercount++;
+      }
+
+      core_set_aidifficulty(difficulty);
+      core_set_playercount(playercount);
+      results_set_points_to_win(3);
+    }
 
     logo = sprite_load("rom:/n64brew.ia8.sprite");
     jam = sprite_load("rom:/jam.rgba32.sprite");
@@ -256,10 +263,6 @@ void menu_init()
     fontdbg = rdpq_font_load_builtin(FONT_BUILTIN_DEBUG_VAR);
     rdpq_text_register_font(FONT_DEBUG, fontdbg);
     
-    playercount = 0;
-    for (int i = 0; i < MAXPLAYERS; i++)
-        if (joypad_is_connected(i)) 
-            playercount++;
 
     sorted_indices = malloc(global_minigame_count * sizeof(int));
     for (int i = 0; i < global_minigame_count; i++)

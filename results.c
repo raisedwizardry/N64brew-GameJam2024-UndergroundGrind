@@ -135,7 +135,7 @@ void results_init()
  * @param gradient gradient on the Y axis
  * @param offset scroll offset
  */
-void menu_draw_bg(sprite_t *pattern, sprite_t *gradient, float offset, float fade)
+static void menu_draw_bg(sprite_t *pattern, sprite_t *gradient, float offset, float fade)
 {
     rdpq_set_mode_standard();
     rdpq_mode_begin();
