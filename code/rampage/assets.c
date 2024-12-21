@@ -124,6 +124,7 @@ void rampage_assets_destroy() {
     t3d_model_free(gRampageAssets.player);
 
     t3d_model_free(gRampageAssets.ground);
+    t3d_model_free(gRampageAssets.ground_cover);
 
     rampage_model_free_split(&gRampageAssets.tankSplit);
     t3d_model_free(gRampageAssets.tank);

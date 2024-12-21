@@ -1127,6 +1127,7 @@ void update_winner()
         if (!draw)
         {
             winner = highestDuck->id;
+            core_set_winner(winner);
         }
 
         wav64_play(&sfx_stop, 31);

@@ -21,7 +21,7 @@ const MinigameDef minigame_def
                         "The player with the most land at the end wins!" };
 
 #define PAUSE_INPUT_DELAY 0.5f
-#define END_INPUT_DELAY 2.0f
+#define END_INPUT_DELAY 5.0f
 #define RANDOM_HINT_DELAY 10.0f
 
 #define MUSIC_PLAY "rom:/landgrab/15yearsb.xm64"
@@ -479,7 +479,7 @@ minigame_end_render (void)
       minigame_upper_msg_print ("It's a draw!");
     }
 
-  minigame_lower_msg_print ("Press A / B / Start to exit");
+  //minigame_lower_msg_print ("Press A / B / Start to exit");
 
   rdpq_detach_show ();
 }
@@ -498,7 +498,7 @@ minigame_end_loop (float deltatime)
     }
   else
     {
-
+      /* Game should exit automatically and not require inputs
       PLAYER_FOREACH (p)
       {
         if (!plynum_is_ai (p))
@@ -512,6 +512,8 @@ minigame_end_loop (float deltatime)
               }
           }
       }
+      */
+      minigame_end ();
     }
 
   minigame_end_render ();

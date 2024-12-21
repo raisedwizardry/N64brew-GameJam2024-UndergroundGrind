@@ -108,6 +108,7 @@ void sound_wavPlayBG(int sfxID)
 {
     wav64_set_loop(&soundEffects[sfxID], true);
     wav64_play(&soundEffects[sfxID], MUSIC_CHANNEL);
+    mixer_ch_set_vol_pan(MUSIC_CHANNEL, 0.2f, 0.5f); // Turn down music channel to compensate
 }
 
 void sound_wavClose(int sfxID)

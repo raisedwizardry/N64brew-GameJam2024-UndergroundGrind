@@ -139,6 +139,17 @@ uint32_t get_music_playtime_ms() {
     return TIMER_MICROS(elapsed_ticks) / 1000;
 }
 
+int get_winner()
+{
+    int currentHighest = 0;
+    for (int players=0; players < 4; players++) {
+        if (points[currentHighest] <= points[players]) {
+            currentHighest = players;
+        }
+    }
+    return currentHighest;
+}
+
 void minigame_loop(float deltatime)
 {
     static long counter = 0;
@@ -183,6 +194,7 @@ void minigame_loop(float deltatime)
         renderOutro();
         break;
     case ENDED:
+        core_set_winner(get_winner());
         minigame_end();
         break;
 
@@ -200,7 +212,6 @@ void minigame_loop(float deltatime)
     rdpq_detach_show();
 }
 void renderOutro() {
-    int currentHighest = 0;
     static uint32_t endTicks = 0;
     if (endTicks == 0) {
         // Get the current tick count
@@ -212,11 +223,7 @@ void renderOutro() {
         gameState = ENDED;
         return;
     }
-    for (int players=0; players < 4; players++) {
-        if (points[currentHighest] <= points[players]) {
-            currentHighest = players;
-        }
-    }
+    int currentHighest = get_winner();
     rdpq_text_printf(NULL, FONT_BUILTIN_DEBUG_MONO, 160, 120, "Player %d wins!", currentHighest+1);
 
     

@@ -200,6 +200,7 @@ void gfx_close(){
         wav64_close(&sounds[i]);
     
     if(modelMatFP) free_uncached(modelMatFP);
+
 }
 
 /* Extern inline instantiations. */

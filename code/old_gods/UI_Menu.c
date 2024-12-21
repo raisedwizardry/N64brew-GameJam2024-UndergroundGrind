@@ -294,7 +294,9 @@ void UI_Menu_Shutdown(AF_ECS* _ecs){
     wav64_close(&sfx_countdown);
     wav64_close(&sfx_stop);
     wav64_close(&sfx_winner);
+    mixer_ch_stop(0);
     wav64_close(&music_2);
+    wav64_close(&sfx_startButton);
 }
 
 //======= SETUP HELPERS ========
@@ -671,12 +673,12 @@ void UI_Menu_RenderPlayingUI(AppData* _appData){
 
     if(gameplayData->countdownTimer <= 0){
         gameplayData->gameState = GAME_STATE_GAME_OVER_LOSE;
-        gameplayData->countdownTimer = COUNT_DOWN_TIME;
+        gameplayData->countdownTimer = QUIT_TIME;
     }
 
     if(gameplayData->godEatCount == GODS_EAT_COUNT){
         gameplayData->gameState = GAME_STATE_GAME_OVER_WIN;
-        gameplayData->countdownTimer = COUNT_DOWN_TIME;
+        gameplayData->countdownTimer = QUIT_TIME;
     }
 
     // detect start button pressed by any player
@@ -734,28 +736,40 @@ void UI_Menu_RenderGameOverScreen(AppData* _appData ){
     // only call this once
     // TODO: tidy this up
     if(isDeclaredWinner == FALSE){
+        mixer_ch_stop(0);
         wav64_close(&music_2);
         wav64_play(&sfx_winner, 31);
         //xm64player_stop(&music);
         isDeclaredWinner = TRUE;
         isMusicPlaying = FALSE;
     }
-   
     
+    AF_Time* time = &_appData->gameTime;
+    gameplayData->countdownTimer -= time->timeSinceLastFrame;
+    if (gameplayData->countdownTimer <= 0){
+        gameplayData->gameState = GAME_STATE_GAME_END;
+        core_set_winner(playerWithHighestScore);
+        minigame_end(); 
+    }
+    
+    /* Game should exit automatically and not require inputs
     for(int i = 0; i < PLAYER_COUNT; ++i){
         // detect start button pressed to restart the game
         if(_appData->input.keys[i][A_KEY].pressed == TRUE){
-            gameplayData->gameState = GAME_STATE_GAME_RESTART;
+            gameplayData->gameState = GAME_STATE_GAME_END;
+            core_set_winner(playerWithHighestScore);
+            minigame_end(); 
         }
 
         // Let the game jam template handle the game ending
         if(_appData->input.keys[i][START_KEY].pressed == TRUE){
-            debugf("End minigame\n");
+            //debugf("End minigame\n");
             gameplayData->gameState = GAME_STATE_GAME_END;
             core_set_winner(playerWithHighestScore);
             minigame_end(); 
         }
     }
+    */
 }
 
 
