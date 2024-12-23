@@ -9,6 +9,7 @@ player, AI, and game loop information.
 #include "core.h"
 #include "minigame.h"
 #include "config.h"
+#include "setup.h"
 #include "menu.h"
 #include "results.h"
 
@@ -200,6 +201,11 @@ void core_initlevels()
     //global_core_alllevels[LEVEL_BOOT].funcPointer_loop      = NULL;
     //global_core_alllevels[LEVEL_BOOT].funcPointer_fixedloop = NULL;
     //global_core_alllevels[LEVEL_BOOT].funcPointer_cleanup   = NULL;
+
+    global_core_alllevels[LEVEL_GAMESETUP].funcPointer_init      = setup_init;
+    global_core_alllevels[LEVEL_GAMESETUP].funcPointer_loop      = setup_loop;
+    global_core_alllevels[LEVEL_GAMESETUP].funcPointer_fixedloop = NULL;
+    global_core_alllevels[LEVEL_GAMESETUP].funcPointer_cleanup   = setup_cleanup;
 
     global_core_alllevels[LEVEL_MINIGAMESELECT].funcPointer_init      = menu_init;
     global_core_alllevels[LEVEL_MINIGAMESELECT].funcPointer_loop      = menu_loop;

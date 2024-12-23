@@ -55,14 +55,14 @@ int main()
     srand(seed);
     register_VI_handler((void(*)(void))rand);
 
-    if (sys_reset_type() == RESET_COLD) {
-       n64brew_logo();
-       libdragon_logo();
-    }
+    //if (sys_reset_type() == RESET_COLD) {
+    //   n64brew_logo();
+    //   libdragon_logo();
+    //}
 
     // Initialize the level system
     core_initlevels();
-    core_level_changeto(LEVEL_MINIGAMESELECT);
+    core_level_changeto(LEVEL_GAMESETUP);
 
     // Program Loop
     while (1)
