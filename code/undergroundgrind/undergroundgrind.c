@@ -23,10 +23,10 @@ const MinigameDef minigame_def = {
 #define TEXT_COLOR          0x6CBB3CFF
 #define TEXT_OUTLINE        0x30521AFF
 
-#define HITBOX_RADIUS       19.f
+#define HITBOX_RADIUS       10.f
 
-#define ATTACK_OFFSET       10
-#define ATTACK_RADIUS       5.f
+#define ATTACK_OFFSET       7
+#define ATTACK_RADIUS       3.5f
 
 #define ATTACK_TIME_START   0.333f
 #define ATTACK_TIME_END     0.4f
@@ -36,7 +36,7 @@ const MinigameDef minigame_def = {
 #define WIN_DELAY           5.0f
 #define WIN_SHOW_DELAY      2.0f
 
-#define TOTAL_BLOCKS        9
+#define TOTAL_BLOCKS        27
 
 #define BILLBOARD_YOFFSET   15.0f
 
@@ -163,25 +163,43 @@ void minigame_init(void)
   }
 
   T3DVec3 blockPositions[] = {
-  	(T3DVec3){{41.0f, 0.0f, 41.0f}},
-  	(T3DVec3){{41.0f, 0.0f, 0.0f}},
-	(T3DVec3){{41.0f, 0.0f, -41.0f}},
-	(T3DVec3){{0.0f, 0.0f, 41.0f}},
-	(T3DVec3){{0.0f, 0.0f, 0.0f}},
-	(T3DVec3){{0.0f, 0.0f, -41.0f}},
-	(T3DVec3){{-41.0f, 0.0f, 41.0f}},
-	(T3DVec3){{-41.0f, 0.0f, 0.0f}},
-	(T3DVec3){{-41.0f, 0.0f, -41.0f}}
+      (T3DVec3){{25.0f, 0.0f, 25.0f}},
+  	  (T3DVec3){{25.0f, 0.0f, 0.0f}},
+	  (T3DVec3){{25.0f, 0.0f, -25.0f}},
+	  (T3DVec3){{0.0f, 0.0f, 25.0f}},
+	  (T3DVec3){{0.0f, 0.0f, 0.0f}},
+	  (T3DVec3){{0.0f, 0.0f, -25.0f}},
+	  (T3DVec3){{-25.0f, 0.0f, 25.0f}},
+	  (T3DVec3){{-25.0f, 0.0f, 0.0f}},
+	  (T3DVec3){{-25.0f, 0.0f, -25.0f}},
+      (T3DVec3){{25.0f, 25.0f, 25.0f}},
+  	  (T3DVec3){{25.0f, 25.0f, 0.0f}},
+	  (T3DVec3){{25.0f, 25.0f, -25.0f}},
+	  (T3DVec3){{0.0f, 25.0f, 25.0f}},
+	  (T3DVec3){{0.0f, 25.0f, 0.0f}},
+	  (T3DVec3){{0.0f, 25.0f, -25.0f}},
+	  (T3DVec3){{-25.0f, 25.0f, 25.0f}},
+	  (T3DVec3){{-25.0f, 25.0f, 0.0f}},
+	  (T3DVec3){{-25.0f, 25.0f, -25.0f}},
+      (T3DVec3){{25.0f, 50.0f, 25.0f}},
+  	  (T3DVec3){{25.0f, 50.0f, 0.0f}},
+	  (T3DVec3){{25.0f, 50.0f, -25.0f}},
+	  (T3DVec3){{0.0f, 50.0f, 25.0f}},
+	  (T3DVec3){{0.0f, 50.0f, 0.0f}},
+	  (T3DVec3){{0.0f, 50.0f, -25.0f}},
+	  (T3DVec3){{-25.0f, 50.0f, 25.0f}},
+	  (T3DVec3){{-25.0f, 50.0f, 0.0f}},
+	  (T3DVec3){{-25.0f, 50.0f, -25.0f}}
   };
 
-  float blockScale = 0.5f;
+  float blockScale = 0.35f;
   
   for (size_t i = 0; i < TOTAL_BLOCKS; i++)
   {
   	initDirtBlock(&dirtBlocks[i], dirtBlockModel, blockScale, RGBA32(255, 0, 0, 255), blockPositions[i]);
   }
 
-  initChest(&chests[0], chestModel, 0.4f, RGBA32(255, 0, 0, 255), blockPositions[chestBlockNumber], chestBlockNumber);
+  initChest(&chests[0], chestModel, 0.3f, RGBA32(255, 0, 0, 255), blockPositions[chestBlockNumber], chestBlockNumber);
 
   dirtBlocks[chestBlockNumber].isContainingChest = true;
   
@@ -259,7 +277,7 @@ void player_fixedloop(SnakePlayer *player, float deltaTime, joypad_port_t port, 
         speed = 20;
     
         // Attack if close, and the reaction time has elapsed
-        if (dist < 25 && !player->isAttack) {
+        if (dist < 15 && !player->isAttack) {
           if (player->ai_reactionspeed <= 0) {
             t3d_anim_set_playing(&player->animAttack, true);
             t3d_anim_set_time(&player->animAttack, 0.0f);
@@ -271,7 +289,7 @@ void player_fixedloop(SnakePlayer *player, float deltaTime, joypad_port_t port, 
           }
         }
       } else {
-        player->ai_target = rand() % 9; // (Attempt) to aquire a new target this frame
+        player->ai_target = rand() % TOTAL_BLOCKS; // (Attempt) to aquire a new target this frame
       }
     }
   }
@@ -338,15 +356,13 @@ void player_loop(SnakePlayer *player, float deltaTime, joypad_port_t port, bool 
       t3d_anim_set_time(&player->animAttack, 0.0f);
       player->isAttack = true;
       player->attackTimer = 0;
-      player->previousButtonPressed = btn.z;
+      if (btn.a) {
+        player->previousButtonPressed = btn.a;
+      }
+      if (btn.z) {
+        player->previousButtonPressed = btn.z;
+      }
       player->comboBonus = 0;
-    }
-
-    if((btn.b) && !player->animJump.isPlaying) {
-      t3d_anim_set_playing(&player->animJump, true);
-      t3d_anim_set_time(&player->animJump, 0.0f);
-      player->isJump = true;
-      player->jumpTimer = 0;
     }
 
   }
@@ -359,11 +375,6 @@ void player_loop(SnakePlayer *player, float deltaTime, joypad_port_t port, bool 
   if(player->isAttack) {
     t3d_anim_update(&player->animAttack, deltaTime); // attack animation now overrides the idle one
     if(!player->animAttack.isPlaying)player->isAttack = false;
-  }
-
-  if(player->isJump) {
-    t3d_anim_update(&player->animJump, deltaTime); // attack animation now overrides the idle one
-    if(!player->animJump.isPlaying)player->isJump = false;
   }
 
   // We now blend the walk animation with the idle/attack one

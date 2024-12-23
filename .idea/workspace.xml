@@ -3,14 +3,40 @@
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
+  <component name="BackendCodeEditorMiscSettings">
+    <option name="/Default/RiderDebugger/RiderRestoreDecompile/RestoreDecompileSetting/@EntryValue" value="false" type="bool" />
+    <option name="/Default/Housekeeping/GlobalSettingsUpgraded/IsUpgraded/@EntryValue" value="true" type="bool" />
+    <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexedValue" value="true" type="bool" />
+    <option name="/Default/Housekeeping/FeatureSuggestion/FeatureSuggestionManager/DisabledSuggesters/=SwitchToGoToActionSuggester/@EntryIndexRemoved" />
+    <option name="/Default/Housekeeping/OptionsDialog/SelectedPageId/@EntryValue" value="CppIncludesOrderOptions" type="string" />
+  </component>
+  <component name="CMakeProjectFlavorService">
+    <option name="flavorId" value="CMakePlainProjectFlavor" />
+  </component>
+  <component name="CMakeRunConfigurationManager">
+    <generated />
+  </component>
+  <component name="CMakeSettings">
+    <configurations>
+      <configuration PROFILE_NAME="Debug" ENABLED="true" CONFIG_NAME="Debug" />
+    </configurations>
+  </component>
   <component name="ChangeListManager">
-    <list default="true" id="13b4c88a-f37c-4434-a0f8-dc68754cbcc5" name="Changes" comment="" />
+    <list default="true" id="13b4c88a-f37c-4434-a0f8-dc68754cbcc5" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" beforeDir="false" afterPath="$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.c" beforeDir="false" afterPath="$PROJECT_DIR$/code/undergroundgrind/undergroundgrind.c" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/config.h" beforeDir="false" afterPath="$PROJECT_DIR$/config.h" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
     <option name="LAST_RESOLUTION" value="IGNORE" />
   </component>
   <component name="ChangesViewManager" show_ignored="true" />
+  <component name="ClangdSettings">
+    <option name="formatViaClangd" value="false" />
+  </component>
   <component name="DpaMonitoringSettings">
     <option name="firstShow" value="false" />
   </component>
@@ -19,20 +45,16 @@
   </component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/code/undergroundgrind/chest.h" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///Users/blackattack/development/github/N64brew-GameJam2024-UndergroundGrind/code/undergroundgrind/dirtblock.h" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///Users/blackattack/development/github/N64brew-GameJam2024-UndergroundGrind/code/undergroundgrind/dirtblock.h" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///Users/blackattack/development/github/N64brew-GameJam2024-UndergroundGrind/code/undergroundgrind/dirtblock.h" root0="SKIP_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/code/undergroundgrind/dirtblock.h" root0="SKIP_HIGHLIGHTING" />
-    <setting file="mock:///Users/blackattack/development/github/N64brew-GameJam2024-UndergroundGrind/code/undergroundgrind/snakeplayer.h" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/code/undergroundgrind/snakeplayer.h" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/config.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/core.c" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/core.h" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/main.c" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/menu.c" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/core.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/core.h" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/main.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/menu.c" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/menu.h" root0="FORCE_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/minigame.c" root0="SKIP_HIGHLIGHTING" />
-    <setting file="file://$PROJECT_DIR$/minigame.h" root0="SKIP_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/minigame.c" root0="FORCE_HIGHLIGHTING" />
+    <setting file="file://$PROJECT_DIR$/minigame.h" root0="FORCE_HIGHLIGHTING" />
   </component>
   <component name="MetaFilesCheckinStateConfiguration" checkMetaFiles="true" />
   <component name="ProjectColorInfo">{
@@ -49,23 +71,31 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ASKED_ADD_EXTERNAL_FILES": "true",
+    "Native Application.make and run.executor": "Run",
     "Native Executable.Ares.executor": "Run",
     "Native Executable.make and load (real n64).executor": "Run",
     "Native Executable.make and run (ares from src).executor": "Run",
     "Native Executable.make and run (local ares).executor": "Run",
     "Native Executable.make and run.executor": "Run",
+    "RunOnceActivity.RadMigrateCodeStyle": "true",
     "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.cidr.known.project.marker": "true",
     "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.readMode.enableVisualFormatting": "true",
+    "Shell Script.Make and Run.executor": "Run",
     "Shell Script.Unnamed.executor": "Run",
     "Shell Script.attach.executor": "Run",
     "Shell Script.make.executor": "Run",
-    "git-widget-placeholder": "reset-and-refocus",
+    "cf.first.check.clang-format": "false",
+    "cidr.known.project.marker": "true",
+    "git-widget-placeholder": "main",
+    "last_opened_file_path": "/Users/blackattack/development/github/N64brew-GameJam2024-UndergroundGrind",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "xpath.settings",
+    "settings.editor.selected.configurable": "preferences.lookFeel",
     "vue.rearranger.settings.migration": "true"
   }
 }]]></component>
@@ -74,7 +104,17 @@
       <recent name="com.jetbrains.rider.cpp.debugger.RiderCppLLDBDriverConfiguration" />
     </key>
   </component>
-  <component name="RunManager" selected="Native Executable.make and run">
+  <component name="RunManager" selected="Native Application.make and run">
+    <configuration default="true" type="CLionExternalRunConfiguration" factoryName="Application" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true">
+      <method v="2">
+        <option name="CLION.EXTERNAL.BUILD" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="Unnamed" type="CLionNativeAppRunConfigurationType" nameIsGenerated="true" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" PASS_PARENT_ENVS_2="true" version="1">
+      <method v="2">
+        <option name="CLION.COMPOUND.BUILD" enabled="true" />
+      </method>
+    </configuration>
     <configuration name="make and load (real n64)" type="RunNativeExe" factoryName="Native Executable">
       <option name="EXE_PATH" value="$USER_HOME$/Applications/UNFLoader" />
       <option name="PROGRAM_PARAMETERS" value="gamejam2024.z64" />
@@ -113,6 +153,23 @@
       <option name="USE_EXTERNAL_CONSOLE" value="0" />
       <method v="2">
         <option name="RunConfigurationTask" enabled="false" run_configuration_name="make" run_configuration_type="ShConfigurationType" />
+      </method>
+    </configuration>
+    <configuration name="Make and Run" type="ShConfigurationType">
+      <option name="SCRIPT_TEXT" value="" />
+      <option name="INDEPENDENT_SCRIPT_PATH" value="true" />
+      <option name="SCRIPT_PATH" value="/Applications/ares.app/Contents/MacOS/ares" />
+      <option name="SCRIPT_OPTIONS" value="--system N64 gamejam2024.z64 --setting DebugServer/Port=1017 --setting DebugServer/Enabled=true --setting DebugServer/UseIPv4=true --setting Paths/Saves=$USER_HOME$/games/ares/saves" />
+      <option name="INDEPENDENT_SCRIPT_WORKING_DIRECTORY" value="true" />
+      <option name="SCRIPT_WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <option name="INDEPENDENT_INTERPRETER_PATH" value="true" />
+      <option name="INTERPRETER_PATH" value="$PROJECT_DIR$" />
+      <option name="INTERPRETER_OPTIONS" value="" />
+      <option name="EXECUTE_IN_TERMINAL" value="true" />
+      <option name="EXECUTE_SCRIPT_FILE" value="true" />
+      <envs />
+      <method v="2">
+        <option name="RunConfigurationTask" enabled="true" run_configuration_name="make" run_configuration_type="ShConfigurationType" />
       </method>
     </configuration>
     <configuration name="attach" type="ShConfigurationType">
@@ -161,10 +218,9 @@
       <method v="2" />
     </configuration>
     <list>
-      <item itemvalue="Native Executable.make and run (local ares)" />
-      <item itemvalue="Native Executable.make and load (real n64)" />
-      <item itemvalue="Native Executable.make and run (ares from src)" />
-      <item itemvalue="Native Executable.make and run" />
+      <item itemvalue="Native Application.Unnamed" />
+      <item itemvalue="Native Application.make and run" />
+      <item itemvalue="Shell Script.Make and Run" />
       <item itemvalue="Shell Script.attach" />
       <item itemvalue="Shell Script.make" />
       <item itemvalue="Shell Script.clean" />
@@ -194,6 +250,9 @@
       <workItem from="1733881555850" duration="25755000" />
       <workItem from="1734066341009" duration="60000" />
       <workItem from="1734066419426" duration="44113000" />
+      <workItem from="1734237226858" duration="775000" />
+      <workItem from="1734754346205" duration="3784000" />
+      <workItem from="1734758297050" duration="20139000" />
     </task>
     <servers />
   </component>

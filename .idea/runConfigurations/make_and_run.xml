@@ -1,0 +1,7 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="make and run" type="CLionNativeAppRunConfigurationType" PROGRAM_PARAMS="--system N64 gamejam2024.z64 --setting DebugServer/Port=1017 --setting DebugServer/Enabled=true --setting DebugServer/UseIPv4=true --setting Paths/Saves=$USER_HOME$/games/ares/saves" REDIRECT_INPUT="false" ELEVATE="false" USE_EXTERNAL_CONSOLE="false" EMULATE_TERMINAL="false" WORKING_DIR="file://$PROJECT_DIR$" PASS_PARENT_ENVS_2="true" PROJECT_NAME="N64brew-GameJam2024-UndergroundGrind" TARGET_NAME="default" CONFIG_NAME="default" version="1" RUN_PATH="$USER_HOME$/Applications/ares.app/Contents/MacOS/ares">
+    <method v="2">
+      <option name="RunConfigurationTask" enabled="true" run_configuration_name="make" run_configuration_type="ShConfigurationType" />
+    </method>
+  </configuration>
+</component>

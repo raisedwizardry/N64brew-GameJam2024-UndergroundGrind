@@ -8,7 +8,7 @@
     ================================================================================================================== */
 
     // Skip asking the number of players and assume PLAYER_COUNT
-    #define SKIP_PLAYERSELECTION  1
+    #define SKIP_PLAYERSELECTION  2
 
     // The number of human players
     #define PLAYER_COUNT  1
@@ -17,7 +17,7 @@
     #define SKIP_DIFFICULTYSELECTION  1
 
     // The difficulty of the AI. 
-    #define AI_DIFFICULTY  DIFF_HARD
+    #define AI_DIFFICULTY DIFF_MEDIUM
 
     // Skip the minigame selection and boot straight into MINIGAME_TO_TEST
     #define SKIP_MINIGAMESELECTION  1
