@@ -2,7 +2,6 @@
 #include <math.h>
 #include "setup.h"
 #include "core.h"
-#include "rdpq_font_internal.h"
 
 
 /*=============================================================
@@ -84,7 +83,6 @@ static float global_cursory;
 static bool  global_showaidiff;
 
 static float global_backtime;
-static surface_t global_zbuff;
 static float global_rotsel1;
 static float global_rotsel2;
 static float global_rotcursor;
@@ -116,14 +114,13 @@ static rdpq_font_t* global_font2;
 =============================================================*/
 
 static void setup_draw(float deltatime);
-static void drawbox(BoxDef* bd, color_t col, bool cullable);
+static void drawbox(BoxDef* bd, color_t col);
 static void drawfade(float time);
 static void culledges(BoxDef* back);
+static void uncull(void);
 static void drawculledsprite(sprite_t* spr, int x, int y, rdpq_blitparms_t* bp);
 static void drawcustomtext(rdpq_font_t* font, rdpq_textparms_t* params, int fontid, int x, int y, char* text);
-static int libdragon_render_text(const rdpq_font_t *fnt, const rdpq_paragraph_char_t *chars, float x0, float y0);
 static bool is_menuvisible(CurrentMenu menu);
-static void font_callback(void* arg);
 
 
 /*=============================================================
@@ -272,7 +269,6 @@ void setup_init()
     global_readyprog = 0;
 
     display_init(RESOLUTION_320x240, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
-    global_zbuff = surface_alloc(FMT_RGBA16, 320, 240);
 
     bdef_backbox_mode = (BoxDef*)malloc(sizeof(BoxDef));
     bdef_backbox_plycount = (BoxDef*)malloc(sizeof(BoxDef));
@@ -294,9 +290,9 @@ void setup_init()
     global_font2 = rdpq_font_load("rom:/squarewave_xl.font64");
     rdpq_text_register_font(FONTDEF_LARGE, global_font1);
     rdpq_text_register_font(FONTDEF_XLARGE, global_font2);
-    rdpq_font_style(global_font1, 1, &(rdpq_fontstyle_t){.custom=font_callback, .color =RGBA32(255, 255, 255, 255)});
-    rdpq_font_style(global_font2, 1, &(rdpq_fontstyle_t){.custom=font_callback, .color =RGBA32(255, 255, 255, 255)});
-    rdpq_font_style(global_font1, 2, &(rdpq_fontstyle_t){.custom=font_callback, .color =RGBA32(148, 145, 8, 255)}); // Do not use hard yellow due to Tritanopia
+    rdpq_font_style(global_font1, 1, &(rdpq_fontstyle_t){.color =RGBA32(255, 255, 255, 255)});
+    rdpq_font_style(global_font2, 1, &(rdpq_fontstyle_t){.color =RGBA32(255, 255, 255, 255)});
+    rdpq_font_style(global_font1, 2, &(rdpq_fontstyle_t){.color =RGBA32(148, 145, 8, 255)}); // Do not use hard yellow due to Tritanopia
     for (int i=0; i<MAXPLAYERS; i++)
         rdpq_font_style(global_font1, 3+i, &(rdpq_fontstyle_t){.color = plyclrs[i]});
 
@@ -563,7 +559,7 @@ void setup_draw(float deltatime)
 
     // Begin drawing
     surface_t* disp = display_get();
-    rdpq_attach(disp, &global_zbuff);
+    rdpq_attach(disp, NULL);
 
     // Draw the background
     rdpq_set_mode_standard();
@@ -571,34 +567,33 @@ void setup_draw(float deltatime)
     rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
     rdpq_set_prim_color(lerpcolor(backcolors[ccurr], backcolors[cnext], global_backtime*backspeed - floor(global_backtime*backspeed)));
     rdpq_fill_rectangle(0, 0, 320, 240);
-    rdpq_clear_z(ZBUF_VAL(0));
 
     // Draw menu sprites
     if (is_menuvisible(MENU_MODE))
     {
         // Draw the container box
-        drawbox(bdef_backbox_mode, (color_t){255, 255, 255, 255}, false);
+        drawbox(bdef_backbox_mode, (color_t){255, 255, 255, 255});
         culledges(bdef_backbox_mode);
+            // Draw option buttons
+            drawbox(bdef_button_freeplay, (color_t){200, 255, 200, 255});
+            drawbox(bdef_button_compete, (color_t){255, 255, 200, 255});
+            rdpq_set_prim_color((color_t){255, 255, 255, 255});
 
-        // Draw option buttons
-        drawbox(bdef_button_freeplay, (color_t){200, 255, 200, 255}, true);
-        drawbox(bdef_button_compete, (color_t){255, 255, 200, 255}, true);
-        rdpq_set_prim_color((color_t){255, 255, 255, 255});
-
-        // Draw button sprites
-        if (global_selection == 0)
-            bp_freeplay.theta = global_rotsel1;
-        else
-            bp_compete.theta = global_rotsel2;
-        drawculledsprite(spr_toybox, bdef_button_freeplay->x + 40, bdef_button_freeplay->y, &bp_freeplay);
-        drawculledsprite(spr_trophy, bdef_button_compete->x + 40, bdef_button_compete->y, &bp_compete);
+            // Draw button sprites
+            if (global_selection == 0)
+                bp_freeplay.theta = global_rotsel1;
+            else
+                bp_compete.theta = global_rotsel2;
+            drawculledsprite(spr_toybox, bdef_button_freeplay->x + 40, bdef_button_freeplay->y, &bp_freeplay);
+            drawculledsprite(spr_trophy, bdef_button_compete->x + 40, bdef_button_compete->y, &bp_compete);
+        uncull();
     }
     if (is_menuvisible(MENU_PLAYERS))
     {
         int playernum = 0;
         const int sprsize = 32;
         const int padding = 16;
-        drawbox(bdef_backbox_plycount, (color_t){255, 255, 255, 255}, false);
+        drawbox(bdef_backbox_plycount, (color_t){255, 255, 255, 255});
         for (int i=0; i<MAXPLAYERS; i++)
         {
             if (global_playerjoined[i])
@@ -641,13 +636,14 @@ void setup_draw(float deltatime)
         }
         if (global_showaidiff)
         {
-            drawbox(bdef_backbox_aidiff, (color_t){255, 255, 255, 255}, false);
+            drawbox(bdef_backbox_aidiff, (color_t){255, 255, 255, 255});
             culledges(bdef_backbox_aidiff);
-            rdpq_set_prim_color(RGBA32(255, 255, 0, 255));
-            drawcustomtext(global_font1, &(rdpq_textparms_t){.width=128, .align=ALIGN_CENTER, .char_spacing=1, .style_id=1}, FONTDEF_LARGE, bdef_backbox_aidiff->x - 64, bdef_backbox_aidiff->y - 40, "AI Difficulty");
-            drawcustomtext(global_font1, &(rdpq_textparms_t){.width=128, .align=ALIGN_CENTER, .char_spacing=1, .style_id=((global_selection == 0) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_aidiff->x - 64, bdef_backbox_aidiff->y - 10 + 24*0, "Easy");
-            drawcustomtext(global_font1, &(rdpq_textparms_t){.width=128, .align=ALIGN_CENTER, .char_spacing=1, .style_id=((global_selection == 1) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_aidiff->x - 64, bdef_backbox_aidiff->y - 10 + 24*1, "Medium");
-            drawcustomtext(global_font1, &(rdpq_textparms_t){.width=128, .align=ALIGN_CENTER, .char_spacing=1, .style_id=((global_selection == 2) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_aidiff->x - 64, bdef_backbox_aidiff->y - 10 + 24*2, "Hard");
+                rdpq_set_prim_color(RGBA32(255, 255, 0, 255));
+                drawcustomtext(global_font1, &(rdpq_textparms_t){.width=128, .align=ALIGN_CENTER, .char_spacing=1, .style_id=1}, FONTDEF_LARGE, bdef_backbox_aidiff->x - 64, bdef_backbox_aidiff->y - 40, "AI Difficulty");
+                drawcustomtext(global_font1, &(rdpq_textparms_t){.width=128, .align=ALIGN_CENTER, .char_spacing=1, .style_id=((global_selection == 0) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_aidiff->x - 64, bdef_backbox_aidiff->y - 10 + 24*0, "Easy");
+                drawcustomtext(global_font1, &(rdpq_textparms_t){.width=128, .align=ALIGN_CENTER, .char_spacing=1, .style_id=((global_selection == 1) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_aidiff->x - 64, bdef_backbox_aidiff->y - 10 + 24*1, "Medium");
+                drawcustomtext(global_font1, &(rdpq_textparms_t){.width=128, .align=ALIGN_CENTER, .char_spacing=1, .style_id=((global_selection == 2) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_aidiff->x - 64, bdef_backbox_aidiff->y - 10 + 24*2, "Hard");
+            uncull();
         }
     }
 
@@ -661,9 +657,11 @@ void setup_draw(float deltatime)
     // Draw z-buffered menu text
     if (is_menuvisible(MENU_MODE))
     {
-        drawcustomtext(global_font2, &(rdpq_textparms_t){.char_spacing=1, .style_id=1}, FONTDEF_XLARGE, bdef_backbox_mode->x-76, bdef_backbox_mode->y-64, "I want to play:");
-        drawcustomtext(global_font1, &(rdpq_textparms_t){.char_spacing=1, .style_id=1}, FONTDEF_LARGE, bdef_button_freeplay->x - 54, bdef_button_freeplay->y+4, "For fun!");
-        drawcustomtext(global_font1, &(rdpq_textparms_t){.char_spacing=1, .style_id=1}, FONTDEF_LARGE, bdef_button_compete->x - 54, bdef_button_compete->y+4, "For glory!");
+        culledges(bdef_backbox_mode);
+            drawcustomtext(global_font2, &(rdpq_textparms_t){.char_spacing=1, .style_id=1}, FONTDEF_XLARGE, bdef_backbox_mode->x-76, bdef_backbox_mode->y-64, "I want to play:");
+            drawcustomtext(global_font1, &(rdpq_textparms_t){.char_spacing=1, .style_id=1}, FONTDEF_LARGE, bdef_button_freeplay->x - 54, bdef_button_freeplay->y+4, "For fun!");
+            drawcustomtext(global_font1, &(rdpq_textparms_t){.char_spacing=1, .style_id=1}, FONTDEF_LARGE, bdef_button_compete->x - 54, bdef_button_compete->y+4, "For glory!");
+        uncull();
     }
 
     // Draw the screen wipe effect
@@ -702,7 +700,6 @@ void setup_cleanup()
     free(bdef_backbox_blacklist);
     free(bdef_button_compete);
     free(bdef_button_freeplay);
-    surface_free(&global_zbuff);
 }
 
 
@@ -711,7 +708,7 @@ void setup_cleanup()
 
 =============================================================*/
 
-static void drawbox(BoxDef* bd, color_t col, bool cullable)
+static void drawbox(BoxDef* bd, color_t col)
 {
     int w2, h2;
     if (bd->w < 32)
@@ -725,11 +722,6 @@ static void drawbox(BoxDef* bd, color_t col, bool cullable)
     rdpq_set_mode_standard();
     rdpq_set_prim_color(col);
     rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
-    if (cullable)
-    {
-        rdpq_mode_zbuf(true, true);
-        rdpq_mode_zoverride(true, 0.7, 0);
-    }
 
     // Background
     if (bd->spr.boxback != NULL)
@@ -745,8 +737,6 @@ static void drawbox(BoxDef* bd, color_t col, bool cullable)
         rdpq_mode_combiner(RDPQ_COMBINER_FLAT);
         rdpq_fill_rectangle(bd->x-w2+cornersizepad, bd->y-h2+cornersizepad, bd->x+w2-cornersizepad, bd->y+h2-cornersizepad);
     }
-    if (cullable)
-        rdpq_mode_zoverride(true, 0.6, 0);
 
     // Corners
     rdpq_mode_combiner(RDPQ_COMBINER1((TEX0,0,PRIM,0), (TEX0,0,PRIM,0)));
@@ -780,23 +770,25 @@ static void culledges(BoxDef* back)
     int boxtop =  back->y - back->h/2 + back->spr.cornersize - 6;
     int boxbottom =  back->y + back->h/2 - back->spr.cornersize - 6;
     int boxright =  back->x + back->w/2 - back->spr.cornersize - 6;
-    uint32_t old_cfg = rdpq_config_disable(RDPQ_CFG_AUTOSCISSOR);
-    rdpq_attach(&global_zbuff, NULL);
-        rdpq_mode_push();
-            rdpq_set_mode_fill(color_from_packed16(ZBUF_VAL(1)));
-            rdpq_fill_rectangle(boxleft, boxtop, boxright, boxbottom);
-        rdpq_mode_pop();
-    rdpq_detach();
-    rdpq_config_set(old_cfg);
+    if (boxleft < 0) boxleft = 0;
+    if (boxtop < 0) boxtop = 0;
+    if (boxright < boxleft) boxright = boxleft;
+    if (boxbottom < boxtop) boxbottom = boxtop;
+
+    rdpq_set_scissor(boxleft, boxtop, boxright, boxbottom);
     rdpq_set_mode_standard();
     rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
     rdpq_mode_combiner(RDPQ_COMBINER1((TEX0,0,PRIM,0), (TEX0,0,PRIM,0)));
 }
 
+static void uncull(void)
+{
+    rdpq_set_scissor(0, 0, 320, 240);
+}
+
 static void drawculledsprite(sprite_t* spr, int x, int y, rdpq_blitparms_t* bp)
 {
-    rdpq_mode_zbuf(true, true);
-    rdpq_mode_zoverride(true, 0.5, 0);
+    rdpq_mode_filter(FILTER_POINT);
     rdpq_sprite_blit(spr, x, y, bp);
 }
 
@@ -848,10 +840,7 @@ static void drawfade(float time)
 
 static void drawcustomtext(rdpq_font_t* font, rdpq_textparms_t* params, int fontid, int x, int y, char* text)
 {
-    int tsize = strlen(text);
-    rdpq_paragraph_t* pg = rdpq_paragraph_build(params, fontid, text, &tsize);
-    libdragon_render_text(font, pg->chars, x, y);
-    rdpq_paragraph_free(pg);
+    rdpq_text_print(params, fontid, x, y, text);
 }
 
 static bool is_menuvisible(CurrentMenu menu)
@@ -865,108 +854,4 @@ static bool is_menuvisible(CurrentMenu menu)
         default:
             return false;
     }
-}
-
-static void font_callback(void* arg)
-{
-    rdpq_mode_zbuf(true, true);
-    rdpq_mode_zoverride(true, 0.5, 0);
-}
-
-
-/*=============================================================
-
-=============================================================*/
-
-static int libdragon_render_text(const rdpq_font_t *fnt, const rdpq_paragraph_char_t *chars, float x0, float y0)
-{
-    uint8_t font_id = chars[0].font_id;
-    int cur_atlas = -1;
-    int cur_style = -1;
-    int rdram_loading = 0;
-    int tile_offset = 0;
-
-    const rdpq_paragraph_char_t *ch = chars;
-    while (ch->font_id == font_id) {
-        const glyph_t *g = &fnt->glyphs[ch->glyph];
-        if (UNLIKELY(ch->style_id != cur_style)) {
-            assertf(ch->style_id < fnt->num_styles,
-                 "style %d not defined in this font", ch->style_id);
-            switch (fnt->flags & FONT_FLAG_TYPE_MASK) {
-                case FONT_TYPE_MONO_OUTLINE:
-                case FONT_TYPE_ALIASED_OUTLINE:
-                    rdpq_set_env_color(fnt->styles[ch->style_id].outline_color);
-                    // fallthrough
-                case FONT_TYPE_ALIASED:
-                case FONT_TYPE_MONO:
-                    rdpq_set_prim_color(fnt->styles[ch->style_id].color);
-                    break;
-                case FONT_TYPE_BITMAP:
-                    break;
-                default:
-                    assert(0);
-            }
-            cur_style = ch->style_id;
-        }
-        if (UNLIKELY(g->natlas != cur_atlas)) {
-            atlas_t *a = &fnt->atlases[g->natlas];
-            rspq_block_run(a->up);
-            // Buu edit start
-            rdpq_mode_zbuf(true, true);
-            rdpq_mode_zoverride(true, 0.5, 0);
-            // Buu edit end
-            if (a->sprite->hslices == 0) { // check if the atlas is in RDRAM instead of TMEM
-                switch (fnt->flags & FONT_FLAG_TYPE_MASK) {
-                case FONT_TYPE_MONO:            rdram_loading = 1; tile_offset = 0; break;
-                case FONT_TYPE_MONO_OUTLINE:    rdram_loading = 1; tile_offset = 1; break;
-                case FONT_TYPE_ALIASED:         rdram_loading = 2; tile_offset = 0; break;
-                case FONT_TYPE_ALIASED_OUTLINE: rdram_loading = 2; tile_offset = 1; break;
-                case FONT_TYPE_BITMAP: switch (TEX_FORMAT_BITDEPTH(sprite_get_format(a->sprite))) {
-                    case 4:     rdram_loading = 1; tile_offset = 0; break;
-                    default:    rdram_loading = 2; tile_offset = 0; break;
-                    } break;
-                default: assert(0);
-                }
-            } else {
-                rdram_loading = 0;
-            }
-            cur_atlas = g->natlas;
-        }
-
-        // Draw the glyph
-        float x = x0 + (ch->x + g->xoff);
-        float y = y0 + (ch->y + g->yoff);
-        int width = g->xoff2 - g->xoff;
-        int height = g->yoff2 - g->yoff;
-        int ntile = g->ntile;
-
-        // Check if the atlas is in RDRAM (rather than TMEM). If so, we need
-        // to load each glyph into TMEM before drawing.
-        if (UNLIKELY(rdram_loading)) {
-            switch (rdram_loading) {
-            case 1:
-                // If the atlas is 4bpp, we need to load the glyph as CI8 (usual trick)
-                // TILE4 is the CI8 tile configured for loading
-                rdpq_load_tile(TILE4, g->s/2, g->t, (g->s+width+1)/2, g->t+height);
-                rdpq_set_tile_size(ntile+tile_offset, g->s & ~1, g->t, (g->s+width+1) & ~1, g->t+height);
-                break;
-            case 2:
-                ntile += tile_offset;
-                tile_offset ^= 4;
-                rdpq_load_tile(ntile, g->s, g->t, g->s+width, g->t+height);
-                ntile ^= (ntile & 1);
-                break;
-            default:
-                assertf(0, "invalid rdram_loading value %d", rdram_loading);
-            }
-        }
-
-        rdpq_texture_rectangle(ntile,
-            x, y, x+width, y+height,
-            g->s, g->t);
-
-        ch++;
-    }
-
-    return ch - chars;
 }
