@@ -30,6 +30,7 @@ typedef enum {
     MENU_MODE,
     MENU_PLAYERS,
     MENU_GAMESETUP,
+    MENU_DONE,
 } CurrentMenu;
 
 typedef enum {
@@ -74,9 +75,13 @@ typedef struct {
 static Transition global_transition;
 static CurrentMenu global_curmenu;
 
+static int global_firstport;
 static int global_selection;
+static bool global_playerjoined[MAXPLAYERS];
+static float global_readyprog;
 static bool  global_cursoractive;
 static float global_cursory;
+static bool  global_showaidiff;
 
 static float global_backtime;
 static surface_t global_zbuff;
@@ -88,6 +93,9 @@ static BoxSpriteDef sprdef_backbox;
 static BoxSpriteDef sprdef_button;
 static BoxDef* bdef_backbox_mode;
 static BoxDef* bdef_backbox_plycount;
+static BoxDef* bdef_backbox_aidiff;
+static BoxDef* bdef_backbox_gameconfig;
+static BoxDef* bdef_backbox_blacklist;
 static BoxDef* bdef_button_freeplay;
 static BoxDef* bdef_button_compete;
 static sprite_t* spr_toybox;
@@ -95,6 +103,10 @@ static sprite_t* spr_trophy;
 static sprite_t* spr_pointer;
 static sprite_t* spr_robot;
 static sprite_t* spr_player;
+static sprite_t* spr_start;
+static sprite_t* spr_a;
+static sprite_t* spr_progress;
+static sprite_t* spr_circlemask;
 static rdpq_font_t* global_font1;
 static rdpq_font_t* global_font2;
 
@@ -108,7 +120,7 @@ static void drawbox(BoxDef* bd, color_t col, bool cullable);
 static void drawfade(float time);
 static void culledges(BoxDef* back);
 static void drawculledsprite(sprite_t* spr, int x, int y, rdpq_blitparms_t* bp);
-static void drawcustomtext(rdpq_font_t* font, int fontid, rdpq_textparms_t* params, int x, int y, char* text);
+static void drawcustomtext(rdpq_font_t* font, rdpq_textparms_t* params, int fontid, int x, int y, char* text);
 static int libdragon_render_text(const rdpq_font_t *fnt, const rdpq_paragraph_char_t *chars, float x0, float y0);
 static bool is_menuvisible(CurrentMenu menu);
 static void font_callback(void* arg);
@@ -244,17 +256,29 @@ void setup_init()
     global_transition = TRANS_FORWARD;
     global_curmenu = MENU_START;
     global_cursoractive = false;
+    global_firstport = -1;
+    for (int i=0; i<MAXPLAYERS; i++)
+    {
+        if (global_firstport == -1 && joypad_is_connected(i))
+            global_firstport = i;
+        global_playerjoined[i] = false;
+    }
+
     global_backtime = 0;
     global_cursory = 0;
     global_rotsel1 = 0;
     global_rotsel2 = 0;
     global_rotcursor = 0;
+    global_readyprog = 0;
 
     display_init(RESOLUTION_320x240, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
     global_zbuff = surface_alloc(FMT_RGBA16, 320, 240);
 
     bdef_backbox_mode = (BoxDef*)malloc(sizeof(BoxDef));
     bdef_backbox_plycount = (BoxDef*)malloc(sizeof(BoxDef));
+    bdef_backbox_aidiff = (BoxDef*)malloc(sizeof(BoxDef));
+    bdef_backbox_gameconfig = (BoxDef*)malloc(sizeof(BoxDef));
+    bdef_backbox_blacklist = (BoxDef*)malloc(sizeof(BoxDef));
     bdef_button_freeplay = (BoxDef*)malloc(sizeof(BoxDef));
     bdef_button_compete = (BoxDef*)malloc(sizeof(BoxDef));
     spr_toybox = sprite_load("rom:/core/ToyBox.rgba32.sprite");
@@ -262,14 +286,19 @@ void setup_init()
     spr_pointer = sprite_load("rom:/core/Pointer.rgba32.sprite");
     spr_player = sprite_load("rom:/core/Controller.rgba32.sprite");
     spr_robot = sprite_load("rom:/core/Robot.rgba32.sprite");
+    spr_start = sprite_load("rom:/core/StartButton.sprite");
+    spr_a = sprite_load("rom:/core/AButton.sprite");
+    spr_progress = sprite_load("rom:/core/CircleProgress.i8.sprite");
+    spr_circlemask = sprite_load("rom:/core/CircleMask.i8.sprite");
     global_font1 = rdpq_font_load("rom:/squarewave_l.font64");
     global_font2 = rdpq_font_load("rom:/squarewave_xl.font64");
     rdpq_text_register_font(FONTDEF_LARGE, global_font1);
     rdpq_text_register_font(FONTDEF_XLARGE, global_font2);
-    rdpq_font_style(global_font1, 1, &(rdpq_fontstyle_t){.custom=font_callback});
-    rdpq_font_style(global_font2, 1, &(rdpq_fontstyle_t){.custom=font_callback});
+    rdpq_font_style(global_font1, 1, &(rdpq_fontstyle_t){.custom=font_callback, .color =RGBA32(255, 255, 255, 255)});
+    rdpq_font_style(global_font2, 1, &(rdpq_fontstyle_t){.custom=font_callback, .color =RGBA32(255, 255, 255, 255)});
+    rdpq_font_style(global_font1, 2, &(rdpq_fontstyle_t){.custom=font_callback, .color =RGBA32(148, 145, 8, 255)}); // Do not use hard yellow due to Tritanopia
     for (int i=0; i<MAXPLAYERS; i++)
-        rdpq_font_style(global_font1, i+2, &(rdpq_fontstyle_t){.color = plyclrs[i]});
+        rdpq_font_style(global_font1, 3+i, &(rdpq_fontstyle_t){.color = plyclrs[i]});
 
     sprdef_backbox.boxcorner = sprite_load("rom:/core/Box_Corner.rgba32.sprite");
     sprdef_backbox.boxedge = sprite_load("rom:/core/Box_Edge.rgba32.sprite");
@@ -297,6 +326,24 @@ void setup_init()
     bdef_backbox_plycount->y = 240/2;
     bdef_backbox_plycount->spr = sprdef_backbox;
 
+    bdef_backbox_aidiff->w = 0;
+    bdef_backbox_aidiff->h = 0;
+    bdef_backbox_aidiff->x = 320/2;
+    bdef_backbox_aidiff->y = 240/2;
+    bdef_backbox_aidiff->spr = sprdef_button;
+
+    bdef_backbox_gameconfig->w = 280;
+    bdef_backbox_gameconfig->h = 200;
+    bdef_backbox_gameconfig->x = bdef_backbox_gameconfig->w*2;
+    bdef_backbox_gameconfig->y = 240/2;
+    bdef_backbox_gameconfig->spr = sprdef_backbox;
+
+    bdef_backbox_blacklist->w = 0;
+    bdef_backbox_blacklist->h = 0;
+    bdef_backbox_blacklist->x = 320/2;
+    bdef_backbox_blacklist->y = 240/2;
+    bdef_backbox_blacklist->spr = sprdef_button;
+
     bdef_button_freeplay->w = 128;
     bdef_button_freeplay->h = 40;
     bdef_button_freeplay->spr = sprdef_button;
@@ -308,14 +355,18 @@ void setup_init()
 
 void setup_loop(float deltatime)
 {
-    int maxselect;
-    joypad_buttons_t btns = joypad_get_buttons_pressed(JOYPAD_PORT_1);
+    int maxselect = 0;
+    joypad_buttons_t btns[4] = {0};
+    for (int i=0; i<MAXPLAYERS; i++)
+        btns[i] = joypad_get_buttons_pressed(i);
 
     // Handle parenting of objects to the main backbox
     bdef_button_freeplay->x = bdef_backbox_mode->x;
     bdef_button_freeplay->y = bdef_backbox_mode->y - 26;
     bdef_button_compete->x = bdef_backbox_mode->x;
     bdef_button_compete->y = bdef_backbox_mode->y + 26;
+    bdef_backbox_aidiff->x = bdef_backbox_plycount->x;
+    bdef_backbox_aidiff->y = bdef_backbox_plycount->y;
 
     // Handle controls
     switch (global_curmenu)
@@ -338,18 +389,14 @@ void setup_loop(float deltatime)
 
             if (global_cursoractive)
             {
-                if (btns.a)
+                if (btns[global_firstport].a)
                 {
                     global_selection = 0;
                     global_curmenu = MENU_PLAYERS;
                     global_transition = TRANS_FORWARD;
                     global_cursoractive = false;
+                    global_showaidiff = false;
                 }
-
-                if (btns.d_down || btns.c_down)
-                    global_selection = (global_selection + 1) % maxselect;
-                else if (btns.d_up || btns.c_up)
-                    global_selection = (global_selection - 1) % maxselect;
             }
             break;
         }
@@ -357,11 +404,56 @@ void setup_loop(float deltatime)
         {
             maxselect = 0;
 
+            if (global_transition == TRANS_FORWARD && bdef_backbox_plycount->x <= 170)
+            {
+                global_cursoractive = true;
+                global_transition = TRANS_NONE;
+            }
+
             if (global_cursoractive)
             {
-                if (btns.a)
+                bool gotonext = false;
+                int firstcont = -1;
+                for (int i=0; i<MAXPLAYERS; i++)
+                    if (btns[i].start)
+                        global_playerjoined[i] = !global_playerjoined[i];
+                for (int i=0; i<MAXPLAYERS; i++)
+                    if (global_playerjoined[i] && firstcont == -1)
+                        firstcont = i;
+                if (!global_showaidiff)
                 {
-                    global_selection = 0;
+                    if (firstcont != -1 && joypad_get_buttons(firstcont).a)
+                    {
+                        global_readyprog += deltatime;
+                        if (global_readyprog >= 1)
+                        {
+                            int count = 0;
+                            global_firstport = firstcont;
+                            if (!global_playerjoined[MAXPLAYERS-1])
+                            {
+                                global_showaidiff = true;
+                                global_cursoractive = false;
+                                global_selection = 1;
+                            }
+                            else
+                                gotonext = true;
+                            for (int i=0; i<MAXPLAYERS; i++)
+                                if (global_playerjoined[i])
+                                    count++;
+                            core_set_playercount(count); // TODO: Modify core to allow different ports for p1
+                        }
+                    }
+                    else
+                        global_readyprog = 0;
+                }
+                else if (btns[global_firstport].a)
+                {
+                    gotonext = true;
+                    core_set_aidifficulty(global_selection);
+                }
+                if (gotonext)
+                {
+                    global_readyprog = 0;
                     global_curmenu = MENU_GAMESETUP;
                     global_transition = TRANS_FORWARD;
                     global_cursoractive = false;
@@ -373,14 +465,6 @@ void setup_loop(float deltatime)
         {
             break;
         }
-    }
-
-    if (global_cursoractive)
-    {
-        if (btns.d_down || btns.c_down)
-            global_selection = (global_selection + 1) % maxselect;
-        else if (btns.d_up || btns.c_up)
-            global_selection = (global_selection - 1) % maxselect;
     }
 
     // Handle animations and transitions
@@ -406,10 +490,51 @@ void setup_loop(float deltatime)
     }
     if (is_menuvisible(MENU_PLAYERS))
     {
-        if (global_curmenu == MENU_PLAYERS && global_transition == TRANS_FORWARD)
+        if (global_curmenu == MENU_PLAYERS && global_transition != TRANS_BACKWARD)
             bdef_backbox_plycount->x = lerp(bdef_backbox_plycount->x, 320/2, 7*deltatime);
         else if (global_curmenu == MENU_MODE && global_transition == TRANS_BACKWARD)
+            bdef_backbox_plycount->x = lerp(bdef_backbox_plycount->x, 320+bdef_backbox_mode->w, 7*deltatime);
+        else if (global_curmenu == MENU_GAMESETUP && global_transition == TRANS_FORWARD)
             bdef_backbox_plycount->x = lerp(bdef_backbox_plycount->x, -bdef_backbox_mode->w, 7*deltatime);
+        if (global_showaidiff)
+        {
+            bdef_backbox_aidiff->w = lerp(bdef_backbox_aidiff->w, 128, 10*deltatime);
+            bdef_backbox_aidiff->h = lerp(bdef_backbox_aidiff->h, 128, 10*deltatime);
+            if (bdef_backbox_aidiff->w > 100)
+            {
+                global_cursoractive = true;
+                maxselect = 3;
+            }
+        }
+    }
+    if (is_menuvisible(MENU_GAMESETUP))
+    {
+        if (global_curmenu == MENU_GAMESETUP && global_transition != TRANS_BACKWARD)
+            bdef_backbox_gameconfig->x = lerp(bdef_backbox_gameconfig->x, 320/2, 7*deltatime);
+        else if (global_curmenu == MENU_PLAYERS && global_transition == TRANS_BACKWARD)
+            bdef_backbox_gameconfig->x = lerp(bdef_backbox_gameconfig->x, 320+bdef_backbox_mode->w, 7*deltatime);
+        else if (global_curmenu == MENU_DONE && global_transition == TRANS_FORWARD)
+        {
+            bdef_backbox_gameconfig->w = lerp(bdef_backbox_gameconfig->w, 0, 7*deltatime);
+            bdef_backbox_gameconfig->h = lerp(bdef_backbox_gameconfig->h, 0, 7*deltatime);
+        }
+    }
+
+    // Handle cursor selection change
+    if (global_cursoractive)
+    {
+        if (btns[global_firstport].d_down || btns[global_firstport].c_down)
+        {
+            global_selection++;
+            if (global_selection >= maxselect)
+                global_selection = 0;
+        }
+        else if (btns[global_firstport].d_up || btns[global_firstport].c_up)
+        {
+            global_selection--;
+            if (global_selection < 0)
+                global_selection = maxselect-1;
+        }
     }
 
     // Draw the scene
@@ -470,15 +595,60 @@ void setup_draw(float deltatime)
     }
     if (is_menuvisible(MENU_PLAYERS))
     {
+        int playernum = 0;
         const int sprsize = 32;
         const int padding = 16;
         drawbox(bdef_backbox_plycount, (color_t){255, 255, 255, 255}, false);
         for (int i=0; i<MAXPLAYERS; i++)
-            rdpq_sprite_blit(spr_robot, bdef_backbox_plycount->x - (sprsize+padding)*2 + padding/2 + (sprsize+padding)*i, bdef_backbox_plycount->y-24, NULL);
+        {
+            if (global_playerjoined[i])
+                rdpq_sprite_blit(spr_player, bdef_backbox_plycount->x +16 - (sprsize+padding)*2 + padding/2 + (sprsize+padding)*i, bdef_backbox_plycount->y, &(rdpq_blitparms_t){.cx=16, .cy=16, .scale_x=1+sin(global_backtime*15)/10, .scale_y=1+cos(global_backtime*15)/10});
+            else
+                rdpq_sprite_blit(spr_robot, bdef_backbox_plycount->x - (sprsize+padding)*2 + padding/2 + (sprsize+padding)*i, bdef_backbox_plycount->y-24, NULL);
+        }
+        rdpq_sprite_blit(spr_start, bdef_backbox_plycount->x - 48, bdef_backbox_plycount->y - 77, NULL);
 
-        rdpq_text_print(&(rdpq_textparms_t){.width=320, .align=ALIGN_CENTER}, FONTDEF_XLARGE, bdef_backbox_plycount->x - 320/2, bdef_backbox_plycount->y-64, "Press START to join");
+        rdpq_text_print(&(rdpq_textparms_t){.width=320, .align=ALIGN_CENTER}, FONTDEF_XLARGE, bdef_backbox_plycount->x - 320/2, bdef_backbox_plycount->y-64, "Press    to join / quit");
         for (int i=0; i<MAXPLAYERS; i++)
-            rdpq_text_printf(&(rdpq_textparms_t){.width=34, .align=ALIGN_CENTER, .style_id=i+2}, FONTDEF_LARGE, bdef_backbox_plycount->x - (sprsize+padding)*2 + padding/2 + (sprsize+padding)*i, bdef_backbox_plycount->y-30, "P%d", i+1);
+        {
+            if (global_playerjoined[i])
+            {
+                playernum++;
+                rdpq_set_mode_standard();
+                rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
+                rdpq_mode_combiner(RDPQ_COMBINER2(
+                    (TEX1,0,PRIM,0),  (0,0,0,TEX0),
+                    (0,0,0,COMBINED), (0,0,0,TEX1)
+                ));
+                rdpq_set_prim_color(RGBA32(255, 0, 0, 255));
+                rdpq_mode_alphacompare((1.0f-global_readyprog)*255.0f);
+                rdpq_tex_multi_begin();
+                    rdpq_sprite_upload(TILE0, spr_circlemask, NULL);
+                    rdpq_sprite_upload(TILE1, spr_progress, NULL);
+                rdpq_tex_multi_end();
+                rdpq_texture_rectangle(TILE0, bdef_backbox_plycount->x - 76 -8, bdef_backbox_plycount->y+56-8, bdef_backbox_plycount->x - 76 + 24, bdef_backbox_plycount->y+56+24, 0, 0);
+                rdpq_set_mode_standard();
+                rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
+                rdpq_set_prim_color(RGBA32(255, 255, 255, 255));
+                rdpq_mode_combiner(RDPQ_COMBINER1((TEX0,0,PRIM,0), (TEX0,0,PRIM,0)));
+                rdpq_sprite_blit(spr_a, bdef_backbox_plycount->x - 76, bdef_backbox_plycount->y+56, NULL);
+                rdpq_text_printf(&(rdpq_textparms_t){.width=34, .align=ALIGN_CENTER, .style_id=2+playernum}, FONTDEF_LARGE, bdef_backbox_plycount->x - (sprsize+padding)*2 + padding/2 + (sprsize+padding)*i, bdef_backbox_plycount->y-30, "P%d", playernum);
+            }
+            else
+                rdpq_text_print(&(rdpq_textparms_t){.width=34, .align=ALIGN_CENTER, .style_id=0}, FONTDEF_LARGE, bdef_backbox_plycount->x - (sprsize+padding)*2 + padding/2 + (sprsize+padding)*i, bdef_backbox_plycount->y-30, "CPU");
+            if (playernum > 0)
+                rdpq_text_print(&(rdpq_textparms_t){.width=320, .align=ALIGN_CENTER}, FONTDEF_LARGE, bdef_backbox_plycount->x - 320/2, bdef_backbox_plycount->y+68, "Hold      when everyone is ready");
+        }
+        if (global_showaidiff)
+        {
+            drawbox(bdef_backbox_aidiff, (color_t){255, 255, 255, 255}, false);
+            culledges(bdef_backbox_aidiff);
+            rdpq_set_prim_color(RGBA32(255, 255, 0, 255));
+            drawcustomtext(global_font1, &(rdpq_textparms_t){.width=128, .align=ALIGN_CENTER, .char_spacing=1, .style_id=1}, FONTDEF_LARGE, bdef_backbox_aidiff->x - 64, bdef_backbox_aidiff->y - 40, "AI Difficulty");
+            drawcustomtext(global_font1, &(rdpq_textparms_t){.width=128, .align=ALIGN_CENTER, .char_spacing=1, .style_id=((global_selection == 0) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_aidiff->x - 64, bdef_backbox_aidiff->y - 10 + 24*0, "Easy");
+            drawcustomtext(global_font1, &(rdpq_textparms_t){.width=128, .align=ALIGN_CENTER, .char_spacing=1, .style_id=((global_selection == 1) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_aidiff->x - 64, bdef_backbox_aidiff->y - 10 + 24*1, "Medium");
+            drawcustomtext(global_font1, &(rdpq_textparms_t){.width=128, .align=ALIGN_CENTER, .char_spacing=1, .style_id=((global_selection == 2) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_aidiff->x - 64, bdef_backbox_aidiff->y - 10 + 24*2, "Hard");
+        }
     }
 
     // Pointer
@@ -491,9 +661,9 @@ void setup_draw(float deltatime)
     // Draw z-buffered menu text
     if (is_menuvisible(MENU_MODE))
     {
-        rdpq_text_print(&(rdpq_textparms_t){.char_spacing=1, .style_id=1}, FONTDEF_XLARGE, bdef_backbox_mode->x-76, bdef_backbox_mode->y-64, "I want to play:");
-        rdpq_text_print(&(rdpq_textparms_t){.char_spacing=1, .style_id=1}, FONTDEF_LARGE, bdef_button_freeplay->x - 54, bdef_button_freeplay->y+4, "For fun!");
-        rdpq_text_print(&(rdpq_textparms_t){.char_spacing=1, .style_id=1}, FONTDEF_LARGE, bdef_button_compete->x - 54, bdef_button_compete->y+4, "For glory!");
+        drawcustomtext(global_font2, &(rdpq_textparms_t){.char_spacing=1, .style_id=1}, FONTDEF_XLARGE, bdef_backbox_mode->x-76, bdef_backbox_mode->y-64, "I want to play:");
+        drawcustomtext(global_font1, &(rdpq_textparms_t){.char_spacing=1, .style_id=1}, FONTDEF_LARGE, bdef_button_freeplay->x - 54, bdef_button_freeplay->y+4, "For fun!");
+        drawcustomtext(global_font1, &(rdpq_textparms_t){.char_spacing=1, .style_id=1}, FONTDEF_LARGE, bdef_button_compete->x - 54, bdef_button_compete->y+4, "For glory!");
     }
 
     // Draw the screen wipe effect
@@ -517,11 +687,19 @@ void setup_cleanup()
     sprite_free(spr_pointer);
     sprite_free(spr_player);
     sprite_free(spr_robot);
+    sprite_free(spr_start);
+    sprite_free(spr_a);
+    sprite_free(spr_progress);
+    sprite_free(spr_circlemask);
     rdpq_text_unregister_font(FONTDEF_LARGE);
     rdpq_text_unregister_font(FONTDEF_XLARGE);
     rdpq_font_free(global_font1);
     rdpq_font_free(global_font2);
     free(bdef_backbox_mode);
+    free(bdef_backbox_plycount);
+    free(bdef_backbox_aidiff);
+    free(bdef_backbox_gameconfig);
+    free(bdef_backbox_blacklist);
     free(bdef_button_compete);
     free(bdef_button_freeplay);
     surface_free(&global_zbuff);
@@ -668,7 +846,7 @@ static void drawfade(float time)
     }
 }
 
-static void drawcustomtext(rdpq_font_t* font, int fontid, rdpq_textparms_t* params, int x, int y, char* text)
+static void drawcustomtext(rdpq_font_t* font, rdpq_textparms_t* params, int fontid, int x, int y, char* text)
 {
     int tsize = strlen(text);
     rdpq_paragraph_t* pg = rdpq_paragraph_build(params, fontid, text, &tsize);

@@ -103,7 +103,6 @@ extern "C" {
         LEVEL_BOOT,
         LEVEL_LOGOS,
         LEVEL_MAINMENU,
-        LEVEL_SETTINGS,
         LEVEL_GAMESETUP,
         LEVEL_MINIGAMESELECT,
         LEVEL_MINIGAME,
