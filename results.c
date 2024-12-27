@@ -207,7 +207,12 @@ void results_loop(float deltatime)
 {
     time += deltatime;
 
-    joypad_buttons_t btn = joypad_get_buttons_pressed(JOYPAD_PORT_1);
+    joypad_buttons_t btn[4] = {
+        joypad_get_buttons_pressed(JOYPAD_PORT_1),
+        joypad_get_buttons_pressed(JOYPAD_PORT_2),
+        joypad_get_buttons_pressed(JOYPAD_PORT_3),
+        joypad_get_buttons_pressed(JOYPAD_PORT_4),
+    };
 
     surface_t *disp = display_get();
 
@@ -384,7 +389,8 @@ void results_loop(float deltatime)
 
     rdpq_detach_show();
 
-    if (can_confirm && !fading_out && btn.a) {
+    bool confirm_pressed = btn[0].a || btn[1].a || btn[2].a || btn[3].a;
+    if (can_confirm && !fading_out && confirm_pressed) {
         fading_out = true;
         fade_out_start = time;
     }
