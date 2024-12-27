@@ -141,7 +141,7 @@ void savestate_load()
         return;
         
     // Recover the game state
-    core_set_playercount(global_gamesave.playercount);
+    //core_set_playercount(global_gamesave.playercount); // TODO
     core_set_aidifficulty(global_gamesave.aidiff);
     results_set_points_to_win(global_gamesave.pointstowin);
     results_set_points(PLAYER_1, global_gamesave.points[0]);

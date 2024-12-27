@@ -22,8 +22,6 @@ This file contains the code for the basic menu
 
 typedef enum
 {
-    SCREEN_PLAYERCOUNT,
-    SCREEN_AIDIFFICULTY,
     SCREEN_MINIGAME
 } menu_screen;
 
@@ -66,32 +64,9 @@ int get_selection_offset(joypad_8way_t direction)
     }
 }
 
-/*==============================
-    get_difficulty_name
-    Gets the display name of an AI difficulty level
-    @param  The AI difficulty
-    @return The display name
-==============================*/
-
-const char *get_difficulty_name(AiDiff difficulty)
-{
-    switch (difficulty)
-    {
-    case DIFF_EASY:
-        return "Easy";
-    case DIFF_MEDIUM:
-        return "Medium";
-    case DIFF_HARD:
-        return "Hard";
-    default:
-        return "Unknown";
-    }
-}
-
 static bool is_first_time = true;
 
 static menu_screen current_screen;  // Current menu screen
-static menu_screen targetscreen;
 static int item_count;              // The number of selection items in the current screen
 static const char *heading;         // The heading of the menu screen
 static int select;                  // The currently selected item
@@ -105,8 +80,6 @@ static bool menu_done;
 static bool has_moved_selection;
 static float yselect;
 static float yselect_target;
-static AiDiff difficulty;
-static uint8_t playercount;
 static color_t BLACK;
 static color_t ASH_GRAY;
 static color_t MAYA_BLUE;
@@ -148,26 +121,11 @@ void set_menu_screen(menu_screen screen)
     current_screen = screen;
     yscroll = 0;
     switch (current_screen) {
-    case SCREEN_PLAYERCOUNT:
-        item_count = MAXPLAYERS;
-        select = core_get_playercount()-1;
-
-        if (MAXPLAYERS == 0) {
-            heading = "No controllers connected!\n";
-        } else {
-            heading = "How many players?\n";
-        }
-        break;
-    case SCREEN_AIDIFFICULTY:
-        item_count = DIFF_HARD+1;
-        select = core_get_aidifficulty();
-        heading = "AI difficulty?\n";
-        break;
-    case SCREEN_MINIGAME:
-        item_count = global_minigame_count;
-        select = 0;
-        heading = "Pick a game!\n";
-        break;
+        case SCREEN_MINIGAME:
+            item_count = global_minigame_count;
+            select = 0;
+            heading = "Pick a game!\n";
+            break;
     }
 }
 
@@ -232,18 +190,6 @@ void menu_init()
 
     display_init(RESOLUTION_320x240, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
 
-    if(is_first_time) {
-      difficulty = AI_DIFFICULTY;  
-      playercount = 0;
-      for (int i = 0; i < MAXPLAYERS; i++) {
-        if(joypad_is_connected(i))playercount++;
-      }
-
-      core_set_aidifficulty(difficulty);
-      core_set_playercount(playercount);
-      results_set_points_to_win(3);
-    }
-
     logo = sprite_load("rom:/n64brew.ia8.sprite");
     jam = sprite_load("rom:/jam.rgba32.sprite");
     bg_pattern = sprite_load("rom:/pattern.i8.sprite");
@@ -270,27 +216,9 @@ void menu_init()
     qsort(sorted_indices, global_minigame_count, sizeof(int), minigame_sort);
 
     selected_minigame = -1;
-    if (SKIP_MINIGAMESELECTION) {
-        for (int i = 0; i < global_minigame_count; i++) {
-            if (!strcasecmp(global_minigame_list[sorted_indices[i]].internalname, MINIGAME_TO_TEST)) {
-                selected_minigame = i;
-                break;
-            }
-        }
-    }
 
     // Set the initial menu screen
-    menu_done = false;
-    targetscreen = SCREEN_MINIGAME;
-    if (is_first_time)
-        targetscreen = SCREEN_PLAYERCOUNT;
-    if (targetscreen == SCREEN_PLAYERCOUNT && SKIP_PLAYERSELECTION)
-        targetscreen = SCREEN_AIDIFFICULTY;
-    if (targetscreen == SCREEN_AIDIFFICULTY && (SKIP_DIFFICULTYSELECTION || playercount == MAXPLAYERS))
-        targetscreen = SCREEN_MINIGAME;
-    if (targetscreen == SCREEN_MINIGAME && SKIP_MINIGAMESELECTION)
-        menu_done = true;
-    set_menu_screen(targetscreen);
+    set_menu_screen(SCREEN_MINIGAME);
 }
 
 
@@ -315,28 +243,12 @@ void menu_loop(float deltatime)
 
     if (btn.a) {
         switch (current_screen) {
-            case SCREEN_PLAYERCOUNT:
-                targetscreen = SCREEN_AIDIFFICULTY;
-                if (targetscreen == SCREEN_AIDIFFICULTY && (SKIP_DIFFICULTYSELECTION || (select+1) == MAXPLAYERS))
-                    targetscreen = SCREEN_MINIGAME;
-                if (targetscreen == SCREEN_MINIGAME && SKIP_MINIGAMESELECTION)
-                    menu_done = true;
-                core_set_playercount(select+1);
-                set_menu_screen(targetscreen);
-                break;
-            case SCREEN_AIDIFFICULTY:
-                core_set_aidifficulty(select);
-                if (SKIP_MINIGAMESELECTION)
-                    menu_done = true;
-                else
-                    set_menu_screen(SCREEN_MINIGAME);
-                break;
             case SCREEN_MINIGAME:
                 selected_minigame = select;
                 menu_done = true;
                 break;
         }
-    } else if (btn.b) {
+    } /*else if (btn.b) {
         switch (current_screen) {
             case SCREEN_AIDIFFICULTY:
                 set_menu_screen(SCREEN_PLAYERCOUNT);
@@ -351,7 +263,7 @@ void menu_loop(float deltatime)
             default:
                 break;
         }
-    }
+    }*/
 
     time += display_get_delta_time();
     surface_t *disp = display_get();
@@ -359,17 +271,8 @@ void menu_loop(float deltatime)
     rdpq_attach(disp, NULL);
     menu_draw_bg(bg_pattern, bg_gradient, time * 12.0f);
 
-    rdpq_textparms_t textparms = {
-        .width = 200, .tabstops = (int16_t[]){ 15 },
-        .disable_aa_fix = true,
-    };
     rdpq_textparms_t textparmsCenter = {
         .align = ALIGN_CENTER,
-        .width = 200,
-        .disable_aa_fix = true,
-    };
-    rdpq_textparms_t textparmsRight = {
-        .align = ALIGN_RIGHT,
         .width = 200,
         .disable_aa_fix = true,
     };
@@ -381,95 +284,7 @@ void menu_loop(float deltatime)
     rdpq_set_env_color(BLACK);      // outline color
     rdpq_mode_filter(FILTER_BILINEAR);
 
-    int x0 = display_get_width() / 2;
     int y0 = 38;
-
-    if(current_screen != SCREEN_MINIGAME) 
-    {
-      int logo_pos_x = display_get_width() / 2;
-      logo_pos_x -= (logo->width + jam->width - 20) / 2;
-      int logo_pos_y = 24;
-
-      rdpq_sprite_blit(logo, logo_pos_x, logo_pos_y, NULL);
-
-      rdpq_blitparms_t param_jam = {
-        .scale_x = 0.9f, 
-        .cx = jam->width / 2,
-        .cy = jam->height / 2,
-        .theta = fm_sinf(time) * 0.3f
-      };
-      param_jam.scale_y = param_jam.scale_x;
-
-      rdpq_set_prim_color(WHITE);
-      rdpq_sprite_blit(jam, logo_pos_x + logo->width + jam->width/2, 
-        logo_pos_y + 15, &param_jam);
-      rdpq_mode_filter(FILTER_POINT);
-      
-      y0 += 20 + logo->height;
-
-      if (yselect_target >= 0) {
-          if (yselect < 0) yselect = yselect_target;
-          yselect = yselect * 0.7 + yselect_target * 0.3;
-      }
-    }
-
-    if(current_screen == SCREEN_PLAYERCOUNT || current_screen == SCREEN_AIDIFFICULTY) 
-    {
-      int ycur = y0;
-      ycur += rdpq_text_print(&textparmsCenter, FONT_TEXT, x0-100, ycur, heading).advance_y;
-      ycur += 4;
-
-      bool is_ai = current_screen == SCREEN_AIDIFFICULTY;
-      sprite_t *btn = is_ai ? btn_wide : btn_round;
-
-      rdpq_set_mode_standard();
-      rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
-      rdpq_mode_combiner(RDPQ_COMBINER_TEX_FLAT);
-      rdpq_mode_filter(FILTER_BILINEAR);
-      rdpq_sprite_upload(TILE0, btn, &(rdpq_texparms_t){.s.repeats = 1, .t.repeats = 1});
-
-      int posXBase = (display_get_width() / 2) 
-        - (btn->width*item_count/2) 
-        + btn->width/2;
-
-      int posX = posXBase;
-      int posY = 120;
-
-      for(int p=0; p<item_count; ++p) 
-      {  
-        float btnScale = 0.8f;
-        if(select == p) {
-          btnScale = 1.0f + (fm_sinf(time * 4.0f) * 0.09f);
-        }
-        float half_size_x = btn->width * 0.5f * btnScale;
-        float half_size_y = btn->height * 0.5f * btnScale;
-
-        rdpq_set_prim_color(select == p ? TEXT_COLOR : ASH_GRAY);
-        rdpq_texture_rectangle_scaled(TILE0, 
-          posX - half_size_x, posY - half_size_y, 
-          posX + half_size_x, posY + half_size_y,
-          -1.5f, -1.5f, btn->width, btn->height
-        );
-        posX += btn->width;
-      }
-
-      rdpq_set_mode_standard();
-      rspq_wait();
-
-      posX = posXBase;
-      for(int p=0; p<item_count; ++p) {
-        if(is_ai) {
-          rdpq_text_printf(&textparmsCenter, FONT_TEXT, posX-100+1, posY+3, 
-            select == p ? "^00%s" : "^01%s", get_difficulty_name(p)
-          );
-        } else {
-          rdpq_text_printf(&textparmsCenter, FONT_TEXT, posX-100+1, posY+3, 
-            select == p ? "^00%d" : "^01%d", p+1
-          );
-        }
-        posX += btn->width;
-      }
-    }
 
     if(current_screen == SCREEN_MINIGAME) {
       int ycur = y0;

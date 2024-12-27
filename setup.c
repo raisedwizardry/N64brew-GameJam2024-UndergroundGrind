@@ -3,6 +3,7 @@
 #include "setup.h"
 #include "core.h"
 #include "minigame.h"
+#include "results.h"
 
 
 /*=============================================================
@@ -445,20 +446,20 @@ void setup_loop(float deltatime)
 
             if (global_cursoractive)
             {
-                int firstcont = -1;
+                int count = 0;
                 for (int i=0; i<MAXPLAYERS; i++)
                     if (joypad_get_buttons_pressed(i).start)
                         global_playerjoined[i] = !global_playerjoined[i];
                 for (int i=0; i<MAXPLAYERS; i++)
-                    if (global_playerjoined[i] && firstcont == -1)
-                        firstcont = i;
-                if (firstcont != -1 && controller_isaheld())
+                    if (global_playerjoined[i])
+                        count++;
+                if (count > 0 && controller_isaheld())
                 {
                     global_readyprog += deltatime;
                     if (global_readyprog >= 1)
                     {
                         global_readyprog = 0;
-                        if (!global_playerjoined[MAXPLAYERS-1])
+                        if (count != 4)
                         {
                             global_curmenu = MENU_AIDIFF;
                             global_selection = 1;
@@ -471,7 +472,7 @@ void setup_loop(float deltatime)
                             global_transition = TRANS_FORWARD;
                             global_cursoractive = false;
                         }
-                        core_set_playercount(global_playerjoined[i]);
+                        core_set_playercount(global_playerjoined);
                     }
                 }
                 else
@@ -649,6 +650,7 @@ void setup_loop(float deltatime)
                 global_fadetime -= deltatime;
                 if (global_fadetime < 0)
                 {
+                    results_set_points_to_win(global_cfg_points);
                     core_set_nextround(global_cfg_nextround);
                     core_level_changeto(LEVEL_MINIGAMESELECT);
                 }
