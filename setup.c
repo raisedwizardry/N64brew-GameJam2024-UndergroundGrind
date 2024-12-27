@@ -363,10 +363,14 @@ void setup_init()
     bdef_backbox_blacklist->y = 240/2;
     bdef_backbox_blacklist->spr = sprdef_button;
 
+    bdef_button_freeplay->x = 0;
+    bdef_button_freeplay->y = 0;
     bdef_button_freeplay->w = 128;
     bdef_button_freeplay->h = 40;
     bdef_button_freeplay->spr = sprdef_button;
 
+    bdef_button_compete->x = 0;
+    bdef_button_compete->y = 0;
     bdef_button_compete->w = 128;
     bdef_button_compete->h = 40;
     bdef_button_compete->spr = sprdef_button;
