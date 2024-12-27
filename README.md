@@ -4,8 +4,6 @@ Welcome to this year's N64brew game jam. This year, we are creating a large coll
 
 Please ensure that you are using the **latest** `preview` branch of Libdragon, that you have [Tiny3D](https://github.com/HailToDodongo/tiny3d) installed, and that you are able to compile this ROM without issues. This template has both an OpenGL and [Tiny3D](https://github.com/HailToDodongo/tiny3d) example game. We also recommend that you fork this repository so that you can then perform a pull request for your final project (although you will lose the ability to make your repository private).
 
-Please note that the menu provided by the template **is not final** and will be changed in the final ROM.
-
 
 ### Starting a new minigame
 

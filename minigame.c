@@ -131,7 +131,10 @@ void minigame_loadnext(char* name)
 void minigame_end()
 {
     global_minigame_ending = true;
-    core_level_changeto(LEVEL_RESULTS);
+    if (core_get_nextround() != NR_FREEPLAY)
+        core_level_changeto(LEVEL_RESULTS);
+    else
+        core_level_changeto(LEVEL_MINIGAMESELECT);
 }
 
 

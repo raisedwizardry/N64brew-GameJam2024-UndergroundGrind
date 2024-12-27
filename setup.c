@@ -285,7 +285,7 @@ void setup_init()
 
     display_init(RESOLUTION_320x240, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
 
-    global_cfg_points = 5;
+    global_cfg_points = 4;
     global_cfg_nextround = NR_LEAST;
     global_cfg_blacklist = (bool*)malloc(sizeof(bool)*global_minigame_count);
     for (int i=0; i<global_minigame_count; i++)
@@ -549,7 +549,7 @@ void setup_loop(float deltatime)
                     if (global_cfg_nextround != NR_FREEPLAY && global_selection == 0)
                     {
                         global_cfg_points++;
-                        if (global_cfg_points > 10)
+                        if (global_cfg_points > 7)
                             global_cfg_points = 1;
                     }
                     else if (global_selection == 1)
@@ -572,7 +572,7 @@ void setup_loop(float deltatime)
                     {
                         global_cfg_points--;
                         if (global_cfg_points < 1)
-                            global_cfg_points = 10;
+                            global_cfg_points = 7;
                     }
                     else if (global_selection == 1)
                     {
