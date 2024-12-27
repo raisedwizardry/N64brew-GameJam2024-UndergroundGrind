@@ -225,7 +225,16 @@ void menu_init()
 
 void menu_loop(float deltatime)
 {
-    int selection_offset = get_selection_offset(joypad_get_direction(JOYPAD_PORT_1, JOYPAD_2D_ANY));
+    int selection_offset = 0;
+    bool a_pressed = false;
+
+    for (int i=0; i<4; i++) {
+        joypad_buttons_t btn = joypad_get_buttons_pressed(JOYPAD_PORT_1+i);
+        if (btn.a) a_pressed = true;
+        selection_offset = get_selection_offset(joypad_get_direction(JOYPAD_PORT_1+i, JOYPAD_2D_ANY));
+        if (selection_offset != 0) break;
+    }
+
     if (selection_offset != 0) {
         if (!has_moved_selection) select += selection_offset;
         has_moved_selection = true;
@@ -240,9 +249,7 @@ void menu_loop(float deltatime)
         yscroll -= 1;
     }
 
-    joypad_buttons_t btn = joypad_get_buttons_pressed(JOYPAD_PORT_1);
-
-    if (btn.a) {
+    if (a_pressed) {
         switch (current_screen) {
             case SCREEN_MINIGAME:
                 selected_minigame = select;
