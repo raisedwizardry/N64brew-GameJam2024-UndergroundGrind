@@ -172,6 +172,7 @@ static void menu_draw_bg(sprite_t* pattern, sprite_t* gradient, float offset)
 void menu_init()
 {
     time = 0.0f;
+    menu_done = false;
 
     BLACK = RGBA32(0x00,0x00,0x00,0xFF);
     ASH_GRAY = RGBA32(0xAD,0xBA,0xBD,0xFF);
