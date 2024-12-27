@@ -41,13 +41,6 @@ typedef enum {
     TRANS_BACKWARD,
 } Transition;
 
-typedef enum {
-    NR_LEAST = 0,
-    NR_ROBIN = 1,
-    NR_RANDOM = 2,
-    NR_FULLRANDOM = 3,
-} NextRound;
-
 
 /*=============================================================
 
@@ -84,12 +77,12 @@ typedef struct {
 static Transition global_transition;
 static CurrentMenu global_curmenu;
 
-static int global_firstport;
 static int global_selection;
 static bool global_playerjoined[MAXPLAYERS];
 static float global_readyprog;
 static bool  global_cursoractive;
 static float global_cursory;
+static float global_stickcooldown;
 
 static int global_cfg_points;
 static NextRound global_cfg_nextround;
@@ -136,6 +129,15 @@ static void drawfade(float time);
 static void culledges(BoxDef* back);
 static void uncull(void);
 static bool is_menuvisible(CurrentMenu menu);
+
+static bool controller_isleft();
+static bool controller_isright();
+static bool controller_isup();
+static bool controller_isdown();
+static bool controller_isa();
+static bool controller_isb();
+static bool controller_isaheld();
+static bool controller_isstartheld();
 
 
 /*=============================================================
@@ -268,13 +270,9 @@ void setup_init()
     global_transition = TRANS_FORWARD;
     global_curmenu = MENU_START;
     global_cursoractive = false;
-    global_firstport = -1;
+    global_stickcooldown = 0;
     for (int i=0; i<MAXPLAYERS; i++)
-    {
-        if (global_firstport == -1 && joypad_is_connected(i))
-            global_firstport = i;
         global_playerjoined[i] = false;
-    }
 
     global_backtime = 0;
     global_fadetime = 0;
@@ -376,11 +374,10 @@ void setup_init()
 void setup_loop(float deltatime)
 {
     int maxselect = 0;
-    joypad_buttons_t btns[4] = {0};
-    for (int i=0; i<MAXPLAYERS; i++)
-        btns[i] = joypad_get_buttons_pressed(i);
 
     // Handle controls
+    if (global_stickcooldown > 0)
+        global_stickcooldown -= deltatime;
     switch (global_curmenu)
     {
         case MENU_START:
@@ -393,7 +390,6 @@ void setup_loop(float deltatime)
                 global_curmenu = MENU_MODE;
                 global_cursory = bdef_button_freeplay->y - 12;
             }
-            else
             break;
         }
         case MENU_MODE:
@@ -409,8 +405,12 @@ void setup_loop(float deltatime)
             }
             else if (global_cursoractive)
             {
-                if (btns[global_firstport].a)
+                if (controller_isa())
                 {
+                    if (global_selection == 0)
+                        global_cfg_nextround = NR_FREEPLAY;
+                    else
+                        global_cfg_nextround = NR_LEAST;
                     global_curmenu = MENU_PLAYERS;
                     global_transition = TRANS_FORWARD;
                     global_cursoractive = false;
@@ -447,18 +447,16 @@ void setup_loop(float deltatime)
             {
                 int firstcont = -1;
                 for (int i=0; i<MAXPLAYERS; i++)
-                    if (btns[i].start)
+                    if (joypad_get_buttons_pressed(i).start)
                         global_playerjoined[i] = !global_playerjoined[i];
                 for (int i=0; i<MAXPLAYERS; i++)
                     if (global_playerjoined[i] && firstcont == -1)
                         firstcont = i;
-                if (firstcont != -1 && joypad_get_buttons(firstcont).a)
+                if (firstcont != -1 && controller_isaheld())
                 {
                     global_readyprog += deltatime;
                     if (global_readyprog >= 1)
                     {
-                        int count = 0;
-                        global_firstport = firstcont;
                         global_readyprog = 0;
                         if (!global_playerjoined[MAXPLAYERS-1])
                         {
@@ -473,15 +471,12 @@ void setup_loop(float deltatime)
                             global_transition = TRANS_FORWARD;
                             global_cursoractive = false;
                         }
-                        for (int i=0; i<MAXPLAYERS; i++)
-                            if (global_playerjoined[i])
-                                count++;
-                        core_set_playercount(count); // TODO: Modify core to allow different ports for p1
+                        core_set_playercount(global_playerjoined[i]);
                     }
                 }
                 else
                     global_readyprog = 0;
-                if (btns[global_firstport].b)
+                if (controller_isb())
                 {
                     global_cursoractive = false;
                     global_curmenu = MENU_MODE;
@@ -503,14 +498,14 @@ void setup_loop(float deltatime)
 
             if (global_cursoractive)
             {
-                if (btns[global_firstport].a)
+                if (controller_isa())
                 {
                     core_set_aidifficulty(global_selection);
                     global_curmenu = MENU_GAMESETUP;
                     global_transition = TRANS_FORWARD;
                     global_cursoractive = false;
                 }
-                else if (btns[global_firstport].b)
+                else if (controller_isb())
                 {
                     global_curmenu = MENU_PLAYERS;
                     global_transition = TRANS_BACKWARD;
@@ -521,7 +516,10 @@ void setup_loop(float deltatime)
         }
         case MENU_GAMESETUP:
         {
-            maxselect = 3;
+            if (global_cfg_nextround != NR_FREEPLAY)
+                maxselect = 3;
+            else
+                maxselect = 1;
 
             if (global_transition == TRANS_FORWARD && bdef_backbox_gameconfig->x <= 170)
             {
@@ -536,15 +534,18 @@ void setup_loop(float deltatime)
                 bdef_backbox_blacklist->w = 0;
                 bdef_backbox_blacklist->h = 0;
                 global_cursoractive = true;
-                global_selection = 2;
+                if (global_cfg_nextround != NR_FREEPLAY)
+                    global_selection = 2;
+                else
+                    global_selection = 0;
                 global_transition = TRANS_NONE;
             }
 
             if (global_cursoractive)
             {
-                if (btns[global_firstport].a || btns[global_firstport].d_right || btns[global_firstport].c_right)
+                if (controller_isa() || controller_isright())
                 {
-                    if (global_selection == 0)
+                    if (global_cfg_nextround != NR_FREEPLAY && global_selection == 0)
                     {
                         global_cfg_points++;
                         if (global_cfg_points > 10)
@@ -556,7 +557,7 @@ void setup_loop(float deltatime)
                         if (global_cfg_nextround > NR_FULLRANDOM)
                             global_cfg_nextround = NR_LEAST;
                     }
-                    else if (global_selection == 2)
+                    else if ((global_cfg_nextround != NR_FREEPLAY && global_selection == 2) || (global_cfg_nextround == NR_FREEPLAY && global_selection == 0))
                     {
                         global_cursoractive = false;
                         global_readyprog = 0;
@@ -564,7 +565,7 @@ void setup_loop(float deltatime)
                         global_transition = TRANS_FORWARD;
                     }
                 }
-                else if (btns[global_firstport].d_left || btns[global_firstport].c_left)
+                else if (controller_isleft())
                 {
                     if (global_selection == 0)
                     {
@@ -580,14 +581,14 @@ void setup_loop(float deltatime)
                             global_cfg_nextround--;
                     }
                 }
-                else if (btns[global_firstport].b)
+                else if (controller_isb())
                 {
                     global_readyprog = 0;
                     global_cursoractive = false;
                     global_curmenu = MENU_PLAYERS;
                     global_transition = TRANS_BACKWARD;
                 }
-                else if (joypad_get_buttons(global_firstport).start)
+                else if (controller_isstartheld())
                 {
                     global_readyprog += deltatime;
                     if (global_readyprog >= 1)
@@ -615,11 +616,11 @@ void setup_loop(float deltatime)
 
             if (global_cursoractive)
             {
-                if (btns[global_firstport].a || btns[global_firstport].d_right || btns[global_firstport].c_right)
+                if (controller_isa() || controller_isright())
                     global_cfg_blacklist[global_selection] = !global_cfg_blacklist[global_selection];
-                else if (btns[global_firstport].d_left || btns[global_firstport].d_left)
+                else if (controller_isleft())
                     global_cfg_blacklist[global_selection] = !global_cfg_blacklist[global_selection];
-                else if (btns[global_firstport].b)
+                else if (controller_isb())
                 {
                     bool availablegame = false;
                     for (int i=0; i<global_minigame_count; i++)
@@ -647,7 +648,10 @@ void setup_loop(float deltatime)
             {
                 global_fadetime -= deltatime;
                 if (global_fadetime < 0)
+                {
+                    core_set_nextround(global_cfg_nextround);
                     core_level_changeto(LEVEL_MINIGAMESELECT);
+                }
             }
 
             break;
@@ -739,13 +743,13 @@ void setup_loop(float deltatime)
     // Handle cursor selection change
     if (global_cursoractive)
     {
-        if (btns[global_firstport].d_down || btns[global_firstport].c_down)
+        if (controller_isdown())
         {
             global_selection++;
             if (global_selection >= maxselect)
                 global_selection = 0;
         }
-        else if (btns[global_firstport].d_up || btns[global_firstport].c_up)
+        else if (controller_isup())
         {
             global_selection--;
             if (global_selection < 0)
@@ -863,6 +867,7 @@ void setup_draw(float deltatime)
     }
     if (is_menuvisible(MENU_GAMESETUP))
     {
+        int increment = 0;
         const char* options[] = {
             "    Least Points",
             "    Round Robin",
@@ -883,10 +888,16 @@ void setup_draw(float deltatime)
 
         // Draw text
         rdpq_text_print(&(rdpq_textparms_t){.char_spacing=1, .style_id=1, .width=320, .align=ALIGN_CENTER}, FONTDEF_XLARGE, bdef_backbox_gameconfig->x-320/2, bdef_backbox_gameconfig->y-64, "Game Setup");
-        rdpq_text_printf(&(rdpq_textparms_t){.char_spacing=1, .style_id=((global_cursoractive && global_selection == 0) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_gameconfig->x-100, bdef_backbox_gameconfig->y-40, "Points to win: %d", global_cfg_points);
-        rdpq_text_print(&(rdpq_textparms_t){.char_spacing=1, .style_id=((global_cursoractive && global_selection == 1) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_gameconfig->x-100, bdef_backbox_gameconfig->y-10, "Who chooses next round: ");
-        rdpq_text_print(&(rdpq_textparms_t){.char_spacing=1, .style_id=((global_cursoractive && global_selection == 1) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_gameconfig->x-100, bdef_backbox_gameconfig->y+5, options[global_cfg_nextround]);
-        rdpq_text_print(&(rdpq_textparms_t){.char_spacing=1, .style_id=((global_cursoractive && global_selection == 2) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_gameconfig->x-100, bdef_backbox_gameconfig->y+35, "Modify minigame blacklist");
+        if (global_cfg_nextround != NR_FREEPLAY)
+        {
+            rdpq_text_printf(&(rdpq_textparms_t){.char_spacing=1, .style_id=((global_cursoractive && global_selection == 0) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_gameconfig->x-100, bdef_backbox_gameconfig->y - 40 + increment, "Points to win: %d", global_cfg_points);
+            increment += 30;
+            rdpq_text_print(&(rdpq_textparms_t){.char_spacing=1, .style_id=((global_cursoractive && global_selection == 1) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_gameconfig->x-100, bdef_backbox_gameconfig->y - 40 + increment, "Who chooses next round: ");
+            increment += 15;
+            rdpq_text_print(&(rdpq_textparms_t){.char_spacing=1, .style_id=((global_cursoractive && global_selection == 1) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_gameconfig->x-100, bdef_backbox_gameconfig->y - 40 + increment, options[global_cfg_nextround]);
+            increment += 30;
+        }
+        rdpq_text_print(&(rdpq_textparms_t){.char_spacing=1, .style_id=((global_cursoractive && ((global_selection == 2 && global_cfg_nextround != NR_FREEPLAY) || (global_selection == 0 && global_cfg_nextround == NR_FREEPLAY))) ? 2 : 1)}, FONTDEF_LARGE, bdef_backbox_gameconfig->x-100, bdef_backbox_gameconfig->y - 40 + increment, "Modify minigame blacklist");
         rdpq_text_print(&(rdpq_textparms_t){.char_spacing=1, .style_id=1, .width=320, .align=ALIGN_CENTER}, FONTDEF_LARGE, bdef_backbox_gameconfig->x-320/2, bdef_backbox_gameconfig->y+72, "Hold      to finish");
         if (global_curmenu == MENU_DONE)
             uncull();
@@ -1144,4 +1155,80 @@ static bool is_menuvisible(CurrentMenu menu)
         default:
             return false;
     }
+}
+
+static bool controller_isleft()
+{
+    for (int i=0; i<MAXPLAYERS; i++)
+    {
+        joypad_inputs_t stick = joypad_get_inputs(i);
+        if (joypad_get_buttons_pressed(i).c_left || joypad_get_buttons_pressed(i).d_left || (joypad_get_axis_pressed(i, JOYPAD_AXIS_STICK_X) == -1 && stick.stick_x < -20))
+            return true;
+    }
+    return false;
+}
+
+static bool controller_isright()
+{
+    for (int i=0; i<MAXPLAYERS; i++)
+    {
+        joypad_inputs_t stick = joypad_get_inputs(i);
+        if (joypad_get_buttons_pressed(i).c_right || joypad_get_buttons_pressed(i).d_right || (joypad_get_axis_pressed(i, JOYPAD_AXIS_STICK_X) == 1 && stick.stick_x > 20))
+            return true;
+    }
+    return false;
+}
+
+static bool controller_isup()
+{
+    for (int i=0; i<MAXPLAYERS; i++)
+    {
+        joypad_inputs_t stick = joypad_get_inputs(i);
+        if (joypad_get_buttons_pressed(i).c_up || joypad_get_buttons_pressed(i).d_up || (joypad_get_axis_pressed(i, JOYPAD_AXIS_STICK_Y) == 1 && stick.stick_y > 20))
+            return true;
+    }
+    return false;
+}
+
+static bool controller_isdown()
+{
+    for (int i=0; i<MAXPLAYERS; i++)
+    {
+        joypad_inputs_t stick = joypad_get_inputs(i);
+        if (joypad_get_buttons_pressed(i).c_down || joypad_get_buttons_pressed(i).d_down || (joypad_get_axis_pressed(i, JOYPAD_AXIS_STICK_Y) == -1 && stick.stick_y < -20))
+            return true;
+    }
+    return false;
+}
+
+static bool controller_isa()
+{
+    for (int i=0; i<MAXPLAYERS; i++)
+        if (joypad_get_buttons_pressed(i).a)
+            return true;
+    return false;
+}
+
+static bool controller_isb()
+{
+    for (int i=0; i<MAXPLAYERS; i++)
+        if (joypad_get_buttons_pressed(i).b)
+            return true;
+    return false;
+}
+
+static bool controller_isaheld()
+{
+    for (int i=0; i<MAXPLAYERS; i++)
+        if (joypad_get_buttons(i).a)
+            return true;
+    return false;
+}
+
+static bool controller_isstartheld()
+{
+    for (int i=0; i<MAXPLAYERS; i++)
+        if (joypad_get_buttons(i).start)
+            return true;
+    return false;
 }

@@ -19,7 +19,6 @@ player, AI, and game loop information.
 *********************************/
 
 typedef struct {
-    PlyNum number;
     joypad_port_t port;
 } Player;
 
@@ -44,6 +43,9 @@ static Level* global_core_curlevel;
 static Level* global_core_nextlevel = NULL;
 static Level global_core_alllevels[LEVELCOUNT];
 
+// Game info
+static NextRound global_nextroundtype = NR_LEAST;
+
 
 /*==============================
     core_get_subtick
@@ -61,30 +63,23 @@ void core_set_subtick(double subtick)
 /*==============================
     core_set_playercount
     Sets the number of human players
-    @param  The number of players
+    @param  The list of which controllers are enabled
 ==============================*/
 
-void core_set_playercount(uint32_t playercount)
+void core_set_playercount(bool* enabledconts)
 {
-    int lastcont = 0;
+    int plynum = 0;
 
     // Attempt to find the first N left-most available controllers
-    for (int i=0; i<playercount; i++)
+    for (int i=0; i<MAXPLAYERS; i++)
     {
-        bool found = false;
-        for (int j=lastcont; j<JOYPAD_PORT_COUNT; j++)
+        if (enabledconts[i])
         {
-            if (joypad_is_connected(j))
-            {
-                global_core_players[i].port = j;
-                found = true;
-                lastcont = ++j;
-                break;
-            }
+            global_core_players[plynum].port = i;
+            plynum++;
         }
-        assertf(found, "Unable to find an available controller for player %d\n", i+1);
     }
-    global_core_playercount = playercount;
+    global_core_playercount = plynum;
 }
 
 /*==============================
@@ -313,4 +308,27 @@ void core_level_docleanup()
 bool core_level_waschanged()
 {
     return global_core_nextlevel != NULL;
+}
+
+
+/*==============================
+    core_set_nextround
+    Sets how the next round is decided
+==============================*/
+
+void core_set_nextround(NextRound type)
+{
+    global_nextroundtype = type;
+}
+
+
+/*==============================
+    core_get_nextround
+    Gets how the next round is decided
+    @return The NextRound type
+==============================*/
+
+NextRound core_get_nextround()
+{
+    return global_nextroundtype;
 }

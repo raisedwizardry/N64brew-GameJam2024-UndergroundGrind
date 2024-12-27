@@ -109,6 +109,14 @@ extern "C" {
         LEVEL_RESULTS,
     } LevelDef;
 
+    typedef enum {
+        NR_LEAST = 0,
+        NR_ROBIN = 1,
+        NR_RANDOM = 2,
+        NR_FULLRANDOM = 3,
+        NR_FREEPLAY = 4,
+    } NextRound;
+
     typedef struct {
         void (*funcPointer_init)(void);
         void (*funcPointer_loop)(float deltatime);
@@ -124,10 +132,13 @@ extern "C" {
     void core_level_docleanup();
     bool core_level_waschanged();
 
-    void core_set_playercount(uint32_t playercount);
+    void core_set_playercount(bool* enabledconts);
     void core_set_aidifficulty(AiDiff difficulty);
     void core_set_subtick(double subtick);
+    void core_set_nextround(NextRound type);
     void core_reset_winners();
+
+    NextRound core_get_nextround();
 
 #ifdef __cplusplus
 }
