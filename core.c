@@ -12,6 +12,8 @@ player, AI, and game loop information.
 #include "setup.h"
 #include "menu.h"
 #include "results.h"
+#include "logo.h"
+#include "savestate.h"
 
 
 /*********************************
@@ -192,10 +194,15 @@ void core_initlevels()
     global_core_nextlevel = NULL;
     global_core_curlevel = NULL;
 
-    //global_core_alllevels[LEVEL_BOOT].funcPointer_init      = NULL;
-    //global_core_alllevels[LEVEL_BOOT].funcPointer_loop      = NULL;
-    //global_core_alllevels[LEVEL_BOOT].funcPointer_fixedloop = NULL;
-    //global_core_alllevels[LEVEL_BOOT].funcPointer_cleanup   = NULL;
+    global_core_alllevels[LEVEL_LOADSAVE].funcPointer_init      = loadsave_init;
+    global_core_alllevels[LEVEL_LOADSAVE].funcPointer_loop      = NULL;
+    global_core_alllevels[LEVEL_LOADSAVE].funcPointer_fixedloop = loadsave_loop;
+    global_core_alllevels[LEVEL_LOADSAVE].funcPointer_cleanup   = loadsave_cleanup;
+
+    global_core_alllevels[LEVEL_MAINMENU].funcPointer_init      = titlescreen_init;
+    global_core_alllevels[LEVEL_MAINMENU].funcPointer_loop      = titlescreen_loop;
+    global_core_alllevels[LEVEL_MAINMENU].funcPointer_fixedloop = NULL;
+    global_core_alllevels[LEVEL_MAINMENU].funcPointer_cleanup   = titlescreen_cleanup;
 
     global_core_alllevels[LEVEL_GAMESETUP].funcPointer_init      = setup_init;
     global_core_alllevels[LEVEL_GAMESETUP].funcPointer_loop      = setup_loop;

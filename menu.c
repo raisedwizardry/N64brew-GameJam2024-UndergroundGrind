@@ -11,6 +11,7 @@ This file contains the code for the basic menu
 #include "minigame.h"
 #include "config.h"
 #include "results.h"
+#include "savestate.h"
 
 
 /*********************************
@@ -19,6 +20,8 @@ This file contains the code for the basic menu
 
 #define FONT_TEXT       1
 #define FONT_DEBUG      2
+
+#define DEBUGINFO false
 
 typedef enum
 {
@@ -71,6 +74,7 @@ static int item_count;              // The number of selection items in the curr
 static const char *heading;         // The heading of the menu screen
 static int select;                  // The currently selected item
 static int yscroll;
+static int minigamecount;
 
 static bool was_minigame = false;
 static surface_t minigame_frame;
@@ -171,6 +175,7 @@ static void menu_draw_bg(sprite_t* pattern, sprite_t* gradient, float offset)
 
 void menu_init()
 {
+    bool blacklist[global_minigame_count];
     time = 0.0f;
     menu_done = false;
 
@@ -209,8 +214,11 @@ void menu_init()
 
     fontdbg = rdpq_font_load_builtin(FONT_BUILTIN_DEBUG_VAR);
     rdpq_text_register_font(FONT_DEBUG, fontdbg);
-    
 
+    savestate_getblacklist(blacklist);
+    for (int i = 0; i < global_minigame_count; i++)
+        if (!blacklist[i])
+            global_minigame_count++;
     sorted_indices = malloc(global_minigame_count * sizeof(int));
     for (int i = 0; i < global_minigame_count; i++)
         sorted_indices[i] = i;
@@ -242,11 +250,14 @@ void menu_loop(float deltatime)
         has_moved_selection = false;
     }
 
-    if (select < 0) select = 0;
-    if (select > item_count-1) select = item_count-1;
+    if (select < 0) select = item_count-1;
+    if (select > item_count-1) select = 0;
 
     if (select < yscroll) {
         yscroll -= 1;
+    }
+    else if (select > yscroll+2) {
+        yscroll += 1;
     }
 
     if (a_pressed) {
@@ -428,7 +439,7 @@ void menu_loop(float deltatime)
         }
     }
 
-    if (true) {
+    if (DEBUGINFO) {
         rdpq_text_printf(NULL, FONT_DEBUG, 10, 15, 
             "Mem: %d KiB", heap_stats.used/1024);
     }

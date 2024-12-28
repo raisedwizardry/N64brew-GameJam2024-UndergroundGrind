@@ -100,8 +100,7 @@ extern "C" {
     #define LEVELCOUNT  8
 
     typedef enum {
-        LEVEL_BOOT,
-        LEVEL_LOGOS,
+        LEVEL_LOADSAVE,
         LEVEL_MAINMENU,
         LEVEL_GAMESETUP,
         LEVEL_MINIGAMESELECT,
@@ -124,21 +123,21 @@ extern "C" {
         void (*funcPointer_cleanup)(void);
     } Level;
 
-    void core_initlevels();
-    void core_level_changeto(LevelDef level);
-    void core_level_doinit();
-    void core_level_doloop(float deltatime);
-    void core_level_dofixedloop(float deltatime);
-    void core_level_docleanup();
-    bool core_level_waschanged();
+    extern void core_initlevels();
+    extern void core_level_changeto(LevelDef level);
+    extern void core_level_doinit();
+    extern void core_level_doloop(float deltatime);
+    extern void core_level_dofixedloop(float deltatime);
+    extern void core_level_docleanup();
+    extern bool core_level_waschanged();
 
-    void core_set_playercount(bool* enabledconts);
-    void core_set_aidifficulty(AiDiff difficulty);
-    void core_set_subtick(double subtick);
-    void core_set_nextround(NextRound type);
-    void core_reset_winners();
+    extern void core_set_playercount(bool* enabledconts);
+    extern void core_set_aidifficulty(AiDiff difficulty);
+    extern void core_set_subtick(double subtick);
+    extern void core_set_nextround(NextRound type);
+    extern void core_reset_winners();
 
-    NextRound core_get_nextround();
+    extern NextRound core_get_nextround();
 
 #ifdef __cplusplus
 }

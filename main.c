@@ -13,6 +13,7 @@ and provides a basic game loop.
 #include "menu.h"
 #include "config.h"
 #include "minigame.h"
+#include "savestate.h"
 
 #define DEBUG 1
 
@@ -40,6 +41,7 @@ int main()
     minigame_loadall();
     audio_init(32000, 3);
     mixer_init(32);
+    savestate_initialize();
 
     // Enable RDP debugging
     #if DEBUG_RDP
@@ -55,14 +57,15 @@ int main()
     srand(seed);
     register_VI_handler((void(*)(void))rand);
 
-    //if (sys_reset_type() == RESET_COLD) {
-    //   n64brew_logo();
-    //   libdragon_logo();
-    //}
+    // Show logos
+    if (sys_reset_type() == RESET_COLD) {
+       n64brew_logo();
+       libdragon_logo();
+    }
 
     // Initialize the level system
     core_initlevels();
-    core_level_changeto(LEVEL_GAMESETUP);
+    core_level_changeto(LEVEL_LOADSAVE);
 
     // Program Loop
     while (1)

@@ -2,6 +2,7 @@
 #include <t3d/t3d.h>
 #include <t3d/t3dmath.h>
 #include <t3d/t3dmodel.h>
+#include "core.h"
 
 
 
@@ -277,5 +278,43 @@ void libdragon_logo(void)
     sprite_free(d3);
     sprite_free(d4);
     wav64_close(&music);
+    display_close();
+}
+
+static bool controller_isstart()
+{
+    for (int i=0; i<MAXPLAYERS; i++)
+        if (joypad_get_buttons_pressed(i).start)
+            return true;
+    return false;
+}
+
+void titlescreen_init()
+{
+    display_init(RESOLUTION_320x240, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
+}
+
+void titlescreen_loop(float deltatime)
+{
+    surface_t* disp;
+    
+    if (controller_isstart())
+        core_level_changeto(LEVEL_GAMESETUP);
+
+    // Get a framebuffer
+    disp = display_get();
+    rdpq_attach(disp, NULL);
+
+    rdpq_set_mode_standard();
+    rdpq_mode_combiner(RDPQ_COMBINER_FLAT);
+    rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
+    rdpq_set_prim_color(RGBA32(200, 200, 0, 255));
+    rdpq_fill_rectangle(0, 0, 320, 240);
+
+    rdpq_detach_show();
+}
+
+void titlescreen_cleanup()
+{
     display_close();
 }

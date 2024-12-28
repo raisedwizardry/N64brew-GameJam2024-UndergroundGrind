@@ -7,6 +7,7 @@ The file contains the results screen
 #include "results.h"
 #include "core.h"
 #include "menu.h"
+#include "savestate.h"
 #include <libdragon.h>
 
 #define FONT_TEXT               1
@@ -399,8 +400,11 @@ void results_loop(float deltatime)
         if (ending) {
             menu_reset();
             results_reset_points();
+            savestate_clear();
+            core_level_changeto(LEVEL_MAINMENU);
         }
-        core_level_changeto(LEVEL_MINIGAMESELECT);
+        else
+            core_level_changeto(LEVEL_MINIGAMESELECT);
     }
 }
 

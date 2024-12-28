@@ -4,6 +4,7 @@
 #include "core.h"
 #include "minigame.h"
 #include "results.h"
+#include "savestate.h"
 
 
 /*=============================================================
@@ -288,8 +289,7 @@ void setup_init()
     global_cfg_points = 4;
     global_cfg_nextround = NR_LEAST;
     global_cfg_blacklist = (bool*)malloc(sizeof(bool)*global_minigame_count);
-    for (int i=0; i<global_minigame_count; i++)
-        global_cfg_blacklist[i] = false; // TODO: Read from save
+    savestate_getblacklist(global_cfg_blacklist);
 
     bdef_backbox_mode = (BoxDef*)malloc(sizeof(BoxDef));
     bdef_backbox_plycount = (BoxDef*)malloc(sizeof(BoxDef));
@@ -313,9 +313,9 @@ void setup_init()
     global_font2 = rdpq_font_load("rom:/squarewave_xl.font64");
     rdpq_text_register_font(FONTDEF_LARGE, global_font1);
     rdpq_text_register_font(FONTDEF_XLARGE, global_font2);
-    rdpq_font_style(global_font1, 1, &(rdpq_fontstyle_t){.color =RGBA32(255, 255, 255, 255)});
-    rdpq_font_style(global_font2, 1, &(rdpq_fontstyle_t){.color =RGBA32(255, 255, 255, 255)});
-    rdpq_font_style(global_font1, 2, &(rdpq_fontstyle_t){.color =RGBA32(148, 145, 8, 255)}); // Do not use hard yellow due to Tritanopia
+    rdpq_font_style(global_font1, 1, &(rdpq_fontstyle_t){.color = RGBA32(255, 255, 255, 255)});
+    rdpq_font_style(global_font2, 1, &(rdpq_fontstyle_t){.color = RGBA32(255, 255, 255, 255)});
+    rdpq_font_style(global_font1, 2, &(rdpq_fontstyle_t){.color = RGBA32(148, 145, 8, 255)}); // Do not use hard yellow due to Tritanopia
     for (int i=0; i<MAXPLAYERS; i++)
         rdpq_font_style(global_font1, 3+i, &(rdpq_fontstyle_t){.color = plyclrs[i]});
 
@@ -656,6 +656,8 @@ void setup_loop(float deltatime)
                 {
                     results_set_points_to_win(global_cfg_points);
                     core_set_nextround(global_cfg_nextround);
+                    savestate_setblacklist(global_cfg_blacklist);
+                    savestate_save(true);
                     core_level_changeto(LEVEL_MINIGAMESELECT);
                 }
             }
