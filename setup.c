@@ -559,7 +559,7 @@ void setup_loop(float deltatime)
                     else if (global_selection == 1)
                     {
                         global_cfg_nextround++;
-                        if (global_cfg_nextround > NR_FULLRANDOM)
+                        if (global_cfg_nextround > NR_RANDOMGAME)
                             global_cfg_nextround = NR_LEAST;
                     }
                     else if ((global_cfg_nextround != NR_FREEPLAY && global_selection == 2) || (global_cfg_nextround == NR_FREEPLAY && global_selection == 0))
@@ -581,7 +581,7 @@ void setup_loop(float deltatime)
                     else if (global_selection == 1)
                     {
                         if (global_cfg_nextround == NR_LEAST)
-                            global_cfg_nextround = NR_FULLRANDOM;
+                            global_cfg_nextround = NR_RANDOMGAME;
                         else
                             global_cfg_nextround--;
                     }
@@ -638,7 +638,6 @@ void setup_loop(float deltatime)
                     }
                     if (availablegame)
                     {
-                        // TODO: Save the blacklist
                         global_curmenu = MENU_GAMESETUP;
                         global_transition = TRANS_BACKWARD;
                         global_cursoractive = false;
@@ -656,6 +655,7 @@ void setup_loop(float deltatime)
                 {
                     results_set_points_to_win(global_cfg_points);
                     core_set_nextround(global_cfg_nextround);
+                    core_set_curchooser(PLAYER_1);
                     savestate_setblacklist(global_cfg_blacklist);
                     savestate_save(true);
                     core_level_changeto(LEVEL_MINIGAMESELECT);
@@ -880,7 +880,7 @@ void setup_draw(float deltatime)
             "    Least Points",
             "    Round Robin",
             "    Random Player",
-            "    Fully Random",
+            "    Random Game",
         };
 
         // Draw the container box

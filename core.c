@@ -33,6 +33,7 @@ typedef struct {
 static Player   global_core_players[JOYPAD_PORT_COUNT];
 static uint32_t global_core_playercount;
 static AiDiff   global_core_aidifficulty = AI_DIFFICULTY;
+static PlyNum   global_core_chooser;
 
 // Minigame info
 static bool global_core_playeriswinner[MAXPLAYERS];
@@ -338,4 +339,26 @@ void core_set_nextround(NextRound type)
 NextRound core_get_nextround()
 {
     return global_nextroundtype;
+}
+
+
+/*==============================
+    core_set_curchooser
+    TODO
+==============================*/
+
+void core_set_curchooser(PlyNum ply)
+{
+    global_core_chooser = ply;
+}
+
+
+/*==============================
+    core_get_curchooser
+    TODO
+==============================*/
+
+PlyNum core_get_curchooser()
+{
+    return global_core_chooser;
 }

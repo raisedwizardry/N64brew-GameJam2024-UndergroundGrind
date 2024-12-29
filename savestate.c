@@ -128,7 +128,7 @@ void savestate_save(bool configonly)
     if (!configonly)
     {
         global_gamesave.crashedflag = 1;
-        global_gamesave.playercount = core_get_playercount();
+        global_gamesave.playercount = core_get_playercount(); // TODO: Handle controller mapping as well
         global_gamesave.aidiff = core_get_aidifficulty();
         global_gamesave.pointstowin = results_get_points_to_win();
         global_gamesave.points[0] = results_get_points(PLAYER_1);
@@ -136,7 +136,7 @@ void savestate_save(bool configonly)
         global_gamesave.points[2] = results_get_points(PLAYER_3);
         global_gamesave.points[3] = results_get_points(PLAYER_4);
         global_gamesave.nextplaystyle = core_get_nextround();
-        global_gamesave.chooser = 0; // TODO
+        global_gamesave.chooser = core_get_curchooser();
         global_gamesave.curgame = 0; // TODO
         global_gamesave.checksum = calc_checksum();
     }
@@ -157,15 +157,15 @@ void savestate_load()
         return;
         
     // Recover the game state
-    //core_set_playercount(global_gamesave.playercount); // TODO
+    //core_set_playercount(global_gamesave.playercount); // TODO: Handle controller mapping as well
     core_set_aidifficulty(global_gamesave.aidiff);
     results_set_points_to_win(global_gamesave.pointstowin);
     results_set_points(PLAYER_1, global_gamesave.points[0]);
     results_set_points(PLAYER_2, global_gamesave.points[1]);
     results_set_points(PLAYER_3, global_gamesave.points[2]);
     results_set_points(PLAYER_4, global_gamesave.points[3]);
-    core_set_nextround(global_gamesave.nextplaystyle); // TODO
-    //global_gamesave.chooser; // TODO
+    core_set_nextround(global_gamesave.nextplaystyle);
+    core_set_curchooser(global_gamesave.chooser);
     //global_gamesave.curgame; // TODO
 }
 
@@ -237,11 +237,12 @@ void loadsave_loop(float deltatime)
     else if (controller_isa())
     {
         if (global_selection == 1)
-            core_level_changeto(LEVEL_MAINMENU);
-        else
         {
-            // TODO: Handle level change properly
+            savestate_load();
+            // TODO: Read the minigame from the savestate, load it, and changeto the minigame level
         }
+        else
+            core_level_changeto(LEVEL_MAINMENU);
     }
 
     // Get a framebuffer
