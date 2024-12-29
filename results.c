@@ -133,6 +133,7 @@ void results_init()
         {
             bool valid = (results_get_points(i) == smallest);
             canbechosen[i] = valid;
+            debugf("Player %d -> %d\n", i, valid);
             if (valid)
                 choicecount++;
         }
@@ -303,30 +304,31 @@ void results_loop(float deltatime)
     {
         int choosecount = 0;
         chooseanim += deltatime;
-        iconxpos = lerp(iconxpos, (320/2) - 12, 2*deltatime);
+        iconxpos = lerp(iconxpos, (320/2) - 12, 4*deltatime);
         for (int i=0; i<MAXPLAYERS; i++)
         {
             if (!canbechosen[i])
-                player_colors[i].a = lerp(player_colors[i].a, 128, deltatime);
+                player_colors[i].a = lerp(player_colors[i].a, 32, 2*deltatime);
             else
                 choosecount++;
         }
-        debugf("%f\n", chooseanim);
 
         // If only one player is selectible, skip the selection animation
         if (choosecount == 1 && chooseanim >= ANIM_CHOOSEPLAYER_MOVE && chooseanim < ANIM_CHOOSEPLAYER_SELECTED)
+        {
             chooseanim = ANIM_CHOOSEPLAYER_SELECTED;
+            currentlychosen = core_get_curchooser();
+        }
 
         // Do the selection animation
-        if (chooseanim >= ANIM_CHOOSEPLAYER_SELECT && chooseanim < ANIM_CHOOSEPLAYER_SELECTED) {
+        if (chooseanim >= ANIM_CHOOSEPLAYER_MOVE && chooseanim < ANIM_CHOOSEPLAYER_SELECT) {
             int j = 0;
-            int curchoice = ((int)((chooseanim - ANIM_CHOOSEPLAYER_SELECTED)*4)) % 4;
+            int curchoice = ((int)((chooseanim - ANIM_CHOOSEPLAYER_MOVE)*(choosecount*3))) % (choosecount*3);
             int possible[choosecount];
             for (int i=0; i<MAXPLAYERS; i++)
                 if (canbechosen[i])
                     possible[j++] = i;
             currentlychosen = possible[curchoice % choosecount];
-            debugf("Currently chosen %d\n", currentlychosen);
         } else if (!fading_out && chooseanim >= ANIM_CHOOSEPLAYER_DONE) {
             fading_out = true;
             fade_out_start = time;
@@ -431,11 +433,12 @@ void results_loop(float deltatime)
                 if (selectingnext && i == currentlychosen && chooseanim >= ANIM_CHOOSEPLAYER_MOVE)
                 {
                     if (chooseanim >= ANIM_CHOOSEPLAYER_SELECTED)
-                        rdpq_set_prim_color(RGBA32(255, 255, 255, (((int)((chooseanim-ANIM_CHOOSEPLAYER_SELECTED)*2))%2)*255));
+                        rdpq_set_prim_color(RGBA32(255, 255, 255, (((int)((chooseanim-ANIM_CHOOSEPLAYER_SELECT)*4))%2)*255));
                     else
                         rdpq_set_prim_color(RGBA32(255, 255, 255, 255));
                     rdpq_sprite_blit(icon_playerselected, iconxpos-4, ycur-4, NULL);
                 }
+                rdpq_mode_combiner(RDPQ_COMBINER1((TEX0,0,PRIM,0), (TEX0,0,PRIM,0)));
                 rdpq_set_prim_color(player_colors[i]);
                 rdpq_sprite_blit(icon_player, iconxpos, ycur, NULL);
 
