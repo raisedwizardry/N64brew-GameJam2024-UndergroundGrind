@@ -1086,6 +1086,8 @@ static void culledges(BoxDef* back)
     int boxright =  back->x + back->w/2 - back->spr.cornersize + 5;
     if (boxleft < 0) boxleft = 0;
     if (boxtop < 0) boxtop = 0;
+    if (boxright > 320) boxright = 320;
+    if (boxbottom > 240) boxbottom = 240;
     if (boxright < boxleft) boxright = boxleft;
     if (boxbottom < boxtop) boxbottom = boxtop;
 
