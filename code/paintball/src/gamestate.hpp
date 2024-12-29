@@ -24,6 +24,7 @@ struct GameState
 
     int scores[MAXPLAYERS];
     PlyNum winner;
+    int winnerCount;
 
     T3DVec3 avPos;
 };

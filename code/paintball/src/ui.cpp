@@ -163,8 +163,8 @@ void UIRenderer::render(GameState &state, T3DViewport &viewport, float deltaTime
             rdpq_text_printf(&textparms3, MediumFont, ScreenWidth * 0.1, ScreenHeight * 0.1, "%d", (int)ceilf(LastOneStandingTime - state.timeInState));
         }
     } else if (state.state == STATE_FINISHED) {
-        centerparms.style_id = state.winner;
-        rdpq_text_printf(&centerparms, BigFont, 0, - ScreenHeight / 3, "Winner!");
+        centerparms.style_id = state.winnerCount > 1 ? 4 : state.winner;
+        rdpq_text_printf(&centerparms, BigFont, 0, - ScreenHeight / 3, state.winnerCount > 1 ? "Draw!" : "Winner!");
 
         for (int i = 0; i < MAXPLAYERS; i++) {
             centerparms.style_id = i;
