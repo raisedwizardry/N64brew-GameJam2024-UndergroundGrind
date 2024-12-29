@@ -133,7 +133,6 @@ void results_init()
         {
             bool valid = (results_get_points(i) == smallest);
             canbechosen[i] = valid;
-            debugf("Player %d -> %d\n", i, valid);
             if (valid)
                 choicecount++;
         }
@@ -166,6 +165,8 @@ void results_init()
         core_set_curchooser(rand() % MAXPLAYERS);
     }
 
+    debugf("%d has been selected\n", core_get_curchooser()+1);
+
     font = rdpq_font_load("rom:/squarewave.font64");
     rdpq_text_register_font(FONT_TEXT, font);
     rdpq_font_style(font, FONT_STYLE_DEFAULT, &(rdpq_fontstyle_t){.color = RGBA32(0xFF,0xDD,0xDD,0xFF), .outline_color = RGBA32(0x31,0x39,0x3C,0xFF) });
@@ -177,9 +178,7 @@ void results_init()
     player_colors[3] = PLAYERCOLOR_4;
 
     for (size_t i = 0; i < MAXPLAYERS; i++)
-    {
-        rdpq_font_style(font, i+1, &(rdpq_fontstyle_t){.color = player_colors[i] });
-    }
+        rdpq_font_style(font, i+1, &(rdpq_fontstyle_t){.color = player_colors[i]});
 
     bg_pattern = sprite_load("rom:/pattern.i8.sprite");
     bg_gradient = sprite_load("rom:/gradient.i8.sprite");
@@ -329,6 +328,8 @@ void results_loop(float deltatime)
                 if (canbechosen[i])
                     possible[j++] = i;
             currentlychosen = possible[curchoice % choosecount];
+        } else if (chooseanim >= ANIM_CHOOSEPLAYER_SELECT && chooseanim < ANIM_CHOOSEPLAYER_SELECTED) {
+            currentlychosen = core_get_curchooser();
         } else if (!fading_out && chooseanim >= ANIM_CHOOSEPLAYER_DONE) {
             fading_out = true;
             fade_out_start = time;

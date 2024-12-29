@@ -303,6 +303,8 @@ void menu_loop(float deltatime)
     rdpq_mode_filter(FILTER_BILINEAR);
 
     int y0 = 38;
+    if (core_get_nextround() != NR_FREEPLAY)
+        y0 = 48;
 
     if(current_screen == SCREEN_MINIGAME) {
       int ycur = y0;
@@ -442,12 +444,21 @@ void menu_loop(float deltatime)
         rdpq_text_printf(NULL, FONT_DEBUG, 10, 15, 
             "Mem: %d KiB", heap_stats.used/1024);
     }
+    if (core_get_nextround() != NR_FREEPLAY)
+    {
+        if (core_get_nextround() == NR_RANDOMGAME)
+            rdpq_text_print(&(rdpq_textparms_t){.width = 320, .align = ALIGN_CENTER}, FONT_TEXT, 0, 24, "Random game being selected");
+        else
+            rdpq_text_printf(&(rdpq_textparms_t){.width = 320, .align = ALIGN_CENTER}, FONT_TEXT, 0, 24, "Player %d selecting game", core_get_curchooser()+1);
+    }
+        
     rdpq_detach_show();
 
     if (menu_done)
     {
         global_lastplayed = select;
         minigame_loadnext(global_minigame_list[sorted_indices[select]].internalname);
+        savestate_save(false);
         core_level_changeto(LEVEL_MINIGAME);
     }
 }
