@@ -71,10 +71,10 @@ static bool is_first_time = true;
 
 static menu_screen current_screen;  // Current menu screen
 static int item_count;              // The number of selection items in the current screen
-static const char *heading;         // The heading of the menu screen
 static int select;                  // The currently selected item
 static int yscroll;
 static int minigamecount;
+static int global_lastplayed = 0;
 
 static bool was_minigame = false;
 static surface_t minigame_frame;
@@ -93,7 +93,6 @@ static color_t BREWFONT;
 static color_t TEXT_COLOR;
 static color_t WHITE;
 static heap_stats_t heap_stats;
-static int selected_minigame;
 static sprite_t *logo;
 static sprite_t *jam;
 static sprite_t *bg_pattern;
@@ -126,9 +125,7 @@ void set_menu_screen(menu_screen screen)
     yscroll = 0;
     switch (current_screen) {
         case SCREEN_MINIGAME:
-            item_count = global_minigame_count;
-            select = 0;
-            heading = "Pick a game!\n";
+            item_count = minigamecount;
             break;
     }
 }
@@ -175,9 +172,11 @@ static void menu_draw_bg(sprite_t* pattern, sprite_t* gradient, float offset)
 
 void menu_init()
 {
+    int j = 0;
     bool blacklist[global_minigame_count];
     time = 0.0f;
     menu_done = false;
+    minigamecount = 0;
 
     BLACK = RGBA32(0x00,0x00,0x00,0xFF);
     ASH_GRAY = RGBA32(0xAD,0xBA,0xBD,0xFF);
@@ -218,13 +217,14 @@ void menu_init()
     savestate_getblacklist(blacklist);
     for (int i = 0; i < global_minigame_count; i++)
         if (!blacklist[i])
-            global_minigame_count++;
-    sorted_indices = malloc(global_minigame_count * sizeof(int));
+            minigamecount++;
+    sorted_indices = malloc(minigamecount * sizeof(int));
     for (int i = 0; i < global_minigame_count; i++)
-        sorted_indices[i] = i;
-    qsort(sorted_indices, global_minigame_count, sizeof(int), minigame_sort);
+        if (!blacklist[i])
+            sorted_indices[j++] = i;
+    qsort(sorted_indices, minigamecount, sizeof(int), minigame_sort);
 
-    selected_minigame = -1;
+    select = global_lastplayed;
 
     // Set the initial menu screen
     set_menu_screen(SCREEN_MINIGAME);
@@ -262,8 +262,7 @@ void menu_loop(float deltatime)
 
     if (a_pressed) {
         switch (current_screen) {
-            case SCREEN_MINIGAME:
-                selected_minigame = select;
+            case SCREEN_MINIGAME: 
                 menu_done = true;
                 break;
         }
@@ -425,7 +424,7 @@ void menu_loop(float deltatime)
         ycur += 6;
         ycur += rdpq_text_printf(&parms, FONT_TEXT, pos_x+10, ycur, "^02%s\n", cur->definition.instructions).advance_y;
 
-      // Minigame nanes in the list
+      // Minigame names in the list
         pos_x = display_get_width() / 2;
         ycur = y0;
         for(int i=0; i<text_count; ++i) {
@@ -447,7 +446,8 @@ void menu_loop(float deltatime)
 
     if (menu_done)
     {
-        minigame_loadnext(global_minigame_list[sorted_indices[selected_minigame]].internalname);
+        global_lastplayed = select;
+        minigame_loadnext(global_minigame_list[sorted_indices[select]].internalname);
         core_level_changeto(LEVEL_MINIGAME);
     }
 }

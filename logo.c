@@ -5,6 +5,9 @@
 #include "core.h"
 
 
+static rdpq_font_t* global_font;
+static float global_flash;
+
 
 // Easing function for quadratic ease-out
 //  t = current time
@@ -281,6 +284,11 @@ void libdragon_logo(void)
     display_close();
 }
 
+
+/*=============================================================
+
+=============================================================*/
+
 static bool controller_isstart()
 {
     for (int i=0; i<MAXPLAYERS; i++)
@@ -292,6 +300,8 @@ static bool controller_isstart()
 void titlescreen_init()
 {
     display_init(RESOLUTION_320x240, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
+    global_font = rdpq_font_load("rom:/squarewave_l.font64");
+    rdpq_text_register_font(1, global_font);
 }
 
 void titlescreen_loop(float deltatime)
@@ -311,10 +321,16 @@ void titlescreen_loop(float deltatime)
     rdpq_set_prim_color(RGBA32(200, 200, 0, 255));
     rdpq_fill_rectangle(0, 0, 320, 240);
 
+    global_flash += deltatime;
+    if (((int)global_flash % 2) == 0)
+        rdpq_text_print(&(rdpq_textparms_t){.width=320, .align=ALIGN_CENTER}, 1, 0, 240/2+64, "Press START");
+
     rdpq_detach_show();
 }
 
 void titlescreen_cleanup()
 {
+    rdpq_text_unregister_font(1);
+    rdpq_font_free(global_font);
     display_close();
 }
