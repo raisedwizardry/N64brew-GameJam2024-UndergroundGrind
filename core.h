@@ -111,8 +111,8 @@ extern "C" {
     typedef enum {
         NR_LEAST = 0,
         NR_ROBIN = 1,
-        NR_RANDOM = 2,
-        NR_FULLRANDOM = 3,
+        NR_RANDOMPLY = 2,
+        NR_RANDOMGAME = 3,
         NR_FREEPLAY = 4,
     } NextRound;
 
@@ -134,10 +134,12 @@ extern "C" {
     extern void core_set_playercount(bool* enabledconts);
     extern void core_set_aidifficulty(AiDiff difficulty);
     extern void core_set_subtick(double subtick);
-    extern void core_set_nextround(NextRound type);
-    extern void core_reset_winners();
 
+    extern void core_reset_winners();
+    extern void core_set_nextround(NextRound type);
     extern NextRound core_get_nextround();
+    extern void core_set_curchooser(PlyNum ply);
+    extern PlyNum core_get_curchooser();
 
 #ifdef __cplusplus
 }

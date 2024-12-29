@@ -9,6 +9,7 @@ The file contains the results screen
 #include "menu.h"
 #include "savestate.h"
 #include <libdragon.h>
+#include <limits.h>
 
 #define FONT_TEXT               1
 #define FONT_STYLE_DEFAULT      0
@@ -26,6 +27,11 @@ The file contains the results screen
 #define FADE_OUT_DURATION       0.6f
 #define FADE_OUT_POST_DELAY     0.2f
 
+#define ANIM_CHOOSEPLAYER_MOVE     1.0f
+#define ANIM_CHOOSEPLAYER_SELECT   4.0f
+#define ANIM_CHOOSEPLAYER_SELECTED 5.0f
+#define ANIM_CHOOSEPLAYER_DONE     6.0f
+
 static int points_to_win;
 static int global_points[MAXPLAYERS];
 
@@ -36,6 +42,7 @@ static sprite_t *bg_pattern;
 static sprite_t *bg_gradient;
 static sprite_t *btn_game;
 static sprite_t *icon_player;
+static sprite_t *icon_playerselected;
 static sprite_t *icon_star;
 
 static wav64_t sfx_point;
@@ -43,9 +50,15 @@ static bool point_sfx_played;
 
 static float time;
 
+static float iconxpos;
 static float confirm_start;
 static bool fading_out;
 static float fade_out_start;
+static bool selectingnext;
+static bool canbechosen[MAXPLAYERS];
+static int currentlychosen;
+static float chooseanim;
+static float chooseanim;
 
 static color_t player_colors[MAXPLAYERS];
 
@@ -82,13 +95,22 @@ inline bool player_has_won(PlyNum player)
     return results_get_points(player) >= results_get_points_to_win();
 }
 
+static inline float lerp(float from, float to, float frac)
+{
+    return from + (to - from)*frac;
+}
+
 void results_init()
 {
     ending = false;
+    selectingnext = false;
+    iconxpos = 30 + 10;
+    currentlychosen = -1;
+    chooseanim = 0;
 
     // Award points to winning players
     for (PlyNum i = 0; i < MAXPLAYERS; i++) {
-        
+
         if (core_get_winner(i)) {
             results_set_points(i, results_get_points(i) + 1);
         }
@@ -96,6 +118,51 @@ void results_init()
         if (player_has_won(i)) {
             ending = true;
         }
+    }
+
+    // Check which players are eligible to be chosen next, and set them as the next one to choose
+    if (core_get_nextround() == NR_LEAST)
+    {
+        int selected = 0;
+        int choicecount = 0;
+        int smallest = INT_MAX;
+        for (int i=0; i<MAXPLAYERS; i++)
+            if (results_get_points(i) < smallest)
+                smallest = results_get_points(i);
+        for (int i=0; i<MAXPLAYERS; i++)
+        {
+            bool valid = (results_get_points(i) == smallest);
+            canbechosen[i] = valid;
+            if (valid)
+                choicecount++;
+        }
+        selected = rand() % choicecount;
+        for (int i=0; i<MAXPLAYERS; i++)
+        {
+            if (canbechosen[i])
+            {
+                choicecount--;
+                if (choicecount == selected)
+                {
+                    core_set_curchooser(i);
+                    break;
+                }
+            }
+        }
+    }
+    else if (core_get_nextround() == NR_ROBIN)
+    {
+        int lastchosen = core_get_curchooser();
+        int nextchosen = (lastchosen + 1) % MAXPLAYERS;
+        for (int i=0; i<MAXPLAYERS; i++)
+            canbechosen[i] = (i == nextchosen);
+        core_set_curchooser(nextchosen);
+    }
+    else if (core_get_nextround() == NR_RANDOMPLY)
+    {
+        for (int i=0; i<MAXPLAYERS; i++)
+            canbechosen[i] = true;
+        core_set_curchooser(rand() % MAXPLAYERS);
     }
 
     font = rdpq_font_load("rom:/squarewave.font64");
@@ -117,6 +184,7 @@ void results_init()
     bg_gradient = sprite_load("rom:/gradient.i8.sprite");
     btn_game = sprite_load("rom:/btnGame.i4.sprite");
     icon_player = sprite_load("rom:/iconPly.ia8.sprite");
+    icon_playerselected = sprite_load("rom:/iconPlySelected.rgba32.sprite");
     icon_star = sprite_load("rom:/iconStar.ia8.sprite");
 
     wav64_open(&sfx_point, "rom:/core/Point.wav64");
@@ -230,6 +298,41 @@ void results_loop(float deltatime)
         point_sfx_played = true;
     }
 
+    // Selection animation
+    if (selectingnext)
+    {
+        int choosecount = 0;
+        chooseanim += deltatime;
+        iconxpos = lerp(iconxpos, (320/2) - 12, 2*deltatime);
+        for (int i=0; i<MAXPLAYERS; i++)
+        {
+            if (!canbechosen[i])
+                player_colors[i].a = lerp(player_colors[i].a, 128, deltatime);
+            else
+                choosecount++;
+        }
+        debugf("%f\n", chooseanim);
+
+        // If only one player is selectible, skip the selection animation
+        if (choosecount == 1 && chooseanim >= ANIM_CHOOSEPLAYER_MOVE && chooseanim < ANIM_CHOOSEPLAYER_SELECTED)
+            chooseanim = ANIM_CHOOSEPLAYER_SELECTED;
+
+        // Do the selection animation
+        if (chooseanim >= ANIM_CHOOSEPLAYER_SELECT && chooseanim < ANIM_CHOOSEPLAYER_SELECTED) {
+            int j = 0;
+            int curchoice = ((int)((chooseanim - ANIM_CHOOSEPLAYER_SELECTED)*4)) % 4;
+            int possible[choosecount];
+            for (int i=0; i<MAXPLAYERS; i++)
+                if (canbechosen[i])
+                    possible[j++] = i;
+            currentlychosen = possible[curchoice % choosecount];
+            debugf("Currently chosen %d\n", currentlychosen);
+        } else if (!fading_out && chooseanim >= ANIM_CHOOSEPLAYER_DONE) {
+            fading_out = true;
+            fade_out_start = time;
+        }
+    }
+
     // Box background
     int rect_width = 260;
     int rect_height = 180;
@@ -325,24 +428,35 @@ void results_loop(float deltatime)
             rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
             for (PlyNum i = 0; i < MAXPLAYERS; i++)
             {
-                rdpq_set_prim_color(player_colors[i]);
-                rdpq_sprite_blit(icon_player, pos_x + 10, ycur, NULL);
-
-                for (int j = 0; j < points_to_win; j++)
+                if (selectingnext && i == currentlychosen && chooseanim >= ANIM_CHOOSEPLAYER_MOVE)
                 {
-                    rdpq_set_prim_color(RGBA32(0x20, 0x20, 0x20, 0xFF));
-                    rdpq_sprite_blit(icon_player, pos_x + 10 + (j+1) * 30, ycur, NULL);
+                    if (chooseanim >= ANIM_CHOOSEPLAYER_SELECTED)
+                        rdpq_set_prim_color(RGBA32(255, 255, 255, (((int)((chooseanim-ANIM_CHOOSEPLAYER_SELECTED)*2))%2)*255));
+                    else
+                        rdpq_set_prim_color(RGBA32(255, 255, 255, 255));
+                    rdpq_sprite_blit(icon_playerselected, iconxpos-4, ycur-4, NULL);
+                }
+                rdpq_set_prim_color(player_colors[i]);
+                rdpq_sprite_blit(icon_player, iconxpos, ycur, NULL);
 
-                    float point_scale = get_point_scale(i, j);
-                    if (point_scale > 0.0f) {
-                        rdpq_set_prim_color(RGBA32(0xFF, 0xFF, 0xFF, 0xFF));
-                        rdpq_sprite_blit(icon_star, pos_x + 22 + (j+1) * 30, ycur+12, &(rdpq_blitparms_t){
-                            .cx = 10,
-                            .cy = 10,
-                            .scale_x = point_scale, 
-                            .scale_y = point_scale,
-                            .theta = fmodf(time*2.4f, FM_PI*2)
-                        });
+                if (!selectingnext)
+                {
+                    for (int j = 0; j < points_to_win; j++)
+                    {
+                        rdpq_set_prim_color(RGBA32(0x20, 0x20, 0x20, 0xFF));
+                        rdpq_sprite_blit(icon_player, pos_x + 10 + (j+1) * 30, ycur, NULL);
+
+                        float point_scale = get_point_scale(i, j);
+                        if (point_scale > 0.0f) {
+                            rdpq_set_prim_color(RGBA32(0xFF, 0xFF, 0xFF, 0xFF));
+                            rdpq_sprite_blit(icon_star, pos_x + 22 + (j+1) * 30, ycur+12, &(rdpq_blitparms_t){
+                                .cx = 10,
+                                .cy = 10,
+                                .scale_x = point_scale, 
+                                .scale_y = point_scale,
+                                .theta = fmodf(time*2.4f, FM_PI*2)
+                            });
+                        }
                     }
                 }
 
@@ -352,26 +466,30 @@ void results_loop(float deltatime)
             ycur = ytmp;
             rdpq_set_mode_standard();
 
-            ycur += rdpq_text_printf(&parms, FONT_TEXT, pos_x, ycur, "RESULTS\n").advance_y;
+            if (!selectingnext)
+                ycur += rdpq_text_printf(&parms, FONT_TEXT, pos_x, ycur, "RESULTS\n").advance_y;
+            else
+                ycur += rdpq_text_printf(&parms, FONT_TEXT, pos_x, ycur, "SELECTING NEXT\n").advance_y;
 
             rdpq_textparms_t plyparms = {
                 .style_id = FONT_STYLE_WHITE,
                 .width = 24,
-                .align = ALIGN_CENTER
+                .align = ALIGN_CENTER,
+                .char_spacing = 1
             };
 
             for (PlyNum i = 0; i < MAXPLAYERS; i++)
             {
-                rdpq_text_printf(&plyparms, FONT_TEXT, pos_x + 10, ycur + 16, "P%d", i+1);
+                rdpq_text_printf(&plyparms, FONT_TEXT, iconxpos, ycur + 16, "P%d", i+1);
 
-                if (core_get_winner(i)) {
+                if (core_get_winner(i) && !selectingnext) {
                     rdpq_text_printf(&plyparms, FONT_TEXT, pos_x + (points_to_win+1) * 30 + 5, ycur + 16, "+1");
                 }
                 ycur += 30;
             }
         }
 
-        if (can_confirm) {
+        if (can_confirm && !selectingnext) {
             rdpq_text_printf(&parms, FONT_TEXT, pos_x, 200, "Press A to continue");
         }
     }
@@ -392,8 +510,11 @@ void results_loop(float deltatime)
 
     bool confirm_pressed = btn[0].a || btn[1].a || btn[2].a || btn[3].a;
     if (can_confirm && !fading_out && confirm_pressed) {
-        fading_out = true;
-        fade_out_start = time;
+        if (core_get_nextround() == NR_RANDOMGAME) {
+            fading_out = true;
+            fade_out_start = time;
+        } else
+            selectingnext = true;
     }
 
     if (fading_out && time > fade_out_start + FADE_OUT_DURATION + FADE_OUT_POST_DELAY) {
@@ -417,6 +538,7 @@ void results_cleanup()
     sprite_free(bg_gradient);
     sprite_free(btn_game);
     sprite_free(icon_player);
+    sprite_free(icon_playerselected);
     sprite_free(icon_star);
     wav64_close(&sfx_point);
     display_close();
