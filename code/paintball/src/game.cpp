@@ -12,6 +12,7 @@ Game::Game() :
         .timeInState = 0.0f,
         .currentRound = 0,
         .scores = {0},
+        .winnerCount = 0,
     }),
     sfxStart("rom:/core/Start.wav64"),
     sfxFinish("rom:/core/Winner.wav64"),
@@ -143,17 +144,21 @@ void Game::processState() {
 
     if (state.currentRound == RoundCount) {
         int maxScore = 0;
-        PlyNum winner = PLAYER_1;
+
         // Calculate max score fol all teams
         for (int i = 0; i < MAXPLAYERS; i++) {
             if (state.scores[i] > maxScore) {
                 maxScore = state.scores[i];
-                winner = (PlyNum)i;
             }
         }
 
-        state.winner = winner;
-        core_set_winner(winner);
+        for (int i = 0; i < MAXPLAYERS; i++) {
+            if (state.scores[i] == maxScore) {
+                state.winner = PlyNum(i);
+                state.winnerCount++;
+                core_set_winner(PlyNum(i));
+            }
+        }
 
         state.state = STATE_FINISHED;
         wav64_play(sfxFinish.get(), GeneralPurposeAudioChannel);
