@@ -7,6 +7,8 @@
 
 static rdpq_font_t* global_font;
 static float global_flash;
+static sprite_t *global_sprite_n64brew;
+static sprite_t *global_sprite_jam;
 
 
 // Easing function for quadratic ease-out
@@ -299,6 +301,8 @@ static bool controller_isstart()
 
 void titlescreen_init()
 {
+    global_sprite_n64brew = sprite_load("rom:/n64brew.ia8.sprite");
+    global_sprite_jam = sprite_load("rom:/jam.rgba32.sprite");
     display_init(RESOLUTION_320x240, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
     global_font = rdpq_font_load("rom:/squarewave_l.font64");
     rdpq_text_register_font(1, global_font);
@@ -311,6 +315,8 @@ void titlescreen_loop(float deltatime)
     if (controller_isstart())
         core_level_changeto(LEVEL_GAMESETUP);
 
+    global_flash += deltatime;
+
     // Get a framebuffer
     disp = display_get();
     rdpq_attach(disp, NULL);
@@ -321,7 +327,21 @@ void titlescreen_loop(float deltatime)
     rdpq_set_prim_color(RGBA32(200, 200, 0, 255));
     rdpq_fill_rectangle(0, 0, 320, 240);
 
-    global_flash += deltatime;
+    rdpq_set_mode_standard();
+    rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
+    rdpq_mode_combiner(RDPQ_COMBINER1((PRIM,ZERO,TEX0,ZERO), (0,0,0,TEX0)));
+    rdpq_set_prim_color(RGBA32(242,209,155,0xFF));
+    rdpq_sprite_blit(global_sprite_n64brew, 45, 50, NULL);
+
+    rdpq_set_mode_standard();
+    rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
+    rdpq_mode_filter(FILTER_BILINEAR);
+    rdpq_sprite_blit(global_sprite_jam, 45+170+21, 40+31, &(rdpq_blitparms_t) {
+        .cx = 21,
+        .cy = 31,
+        .theta = fm_sinf(global_flash*4) * 0.2f
+    });
+
     if (((int)global_flash % 2) == 0)
         rdpq_text_print(&(rdpq_textparms_t){.width=320, .align=ALIGN_CENTER}, 1, 0, 240/2+64, "Press START");
 
@@ -333,4 +353,6 @@ void titlescreen_cleanup()
     rdpq_text_unregister_font(1);
     rdpq_font_free(global_font);
     display_close();
+    sprite_free(global_sprite_jam);
+    sprite_free(global_sprite_n64brew);
 }
