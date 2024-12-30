@@ -109,6 +109,10 @@ static rdpq_font_t *font;
 static rdpq_font_t *fontdbg;
 static int* sorted_indices;
 
+static wav64_t sfx_cursor;
+static wav64_t sfx_confirm;
+static wav64_t sfx_back;
+
 static float fadeouttime;
 static float time;
 
@@ -219,6 +223,10 @@ void menu_init()
     fontdbg = rdpq_font_load_builtin(FONT_BUILTIN_DEBUG_VAR);
     rdpq_text_register_font(FONT_DEBUG, fontdbg);
 
+    wav64_open(&sfx_cursor, "rom:/core/cursor.wav64");
+    wav64_open(&sfx_confirm, "rom:/core/menu_confirm.wav64");
+    wav64_open(&sfx_back, "rom:/core/menu_back.wav64");
+
     savestate_getblacklist(blacklist);
     for (int i = 0; i < global_minigame_count; i++)
         if (!blacklist[i])
@@ -316,8 +324,11 @@ void menu_loop(float deltatime)
         }
 
         if (selection_offset != 0) {
-            if (!has_moved_selection) select += selection_offset;
-            has_moved_selection = true;
+            if (!has_moved_selection) {
+                select += selection_offset;
+                has_moved_selection = true;
+                wav64_play(&sfx_cursor, 31);
+            }
         } else {
             has_moved_selection = false;
         }
@@ -347,10 +358,12 @@ void menu_loop(float deltatime)
         if (a_pressed) {
             menu_done = true;
             fadeouttime = FADETIME;
+            wav64_play(&sfx_confirm, 30);
         } else if (b_pressed && core_get_nextround() == NR_FREEPLAY) {
             menu_done = true;
             menu_quit = true;
             fadeouttime = FADETIME;
+            wav64_play(&sfx_back, 30);
         }
     }
 
@@ -594,5 +607,10 @@ void menu_cleanup()
     rdpq_text_unregister_font(FONT_DEBUG);
     rdpq_font_free(font);
     rdpq_font_free(fontdbg);
+
+    wav64_close(&sfx_cursor);
+    wav64_close(&sfx_confirm);
+    wav64_close(&sfx_back);
+
     display_close();
 }
