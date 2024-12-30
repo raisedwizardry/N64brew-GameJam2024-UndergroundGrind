@@ -25,6 +25,8 @@ filesystem/core/dragon.wav64: AUDIOCONV_FLAGS += --wav-resample 32000 --wav-mono
 include $(N64_INST)/include/n64.mk
 include $(N64_INST)/include/t3d.mk
 
+N64_ROM_SAVETYPE = eeprom4k
+
 MINIGAMES_LIST = $(notdir $(wildcard $(MINIGAME_DIR)/*))
 DSO_LIST = $(addprefix $(MINIGAMEDSO_DIR)/, $(addsuffix .dso, $(MINIGAMES_LIST)))
 
