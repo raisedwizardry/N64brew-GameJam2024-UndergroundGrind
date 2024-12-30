@@ -118,6 +118,11 @@ static sprite_t* spr_tick;
 static sprite_t* spr_cross;
 static rdpq_font_t* global_font1;
 static rdpq_font_t* global_font2;
+static wav64_t sfx_cursor;
+static wav64_t sfx_confirm;
+static wav64_t sfx_back;
+static wav64_t sfx_join;
+static wav64_t sfx_leave;
 
 
 /*=============================================================
@@ -141,6 +146,9 @@ static bool controller_isb();
 static bool controller_isaheld();
 static bool controller_isstartheld();
 
+static void play_cursor_sfx();
+static void play_confirm_sfx();
+static void play_back_sfx();
 
 /*=============================================================
 
@@ -333,6 +341,12 @@ void setup_init()
     sprdef_button.boxbacksurface = sprite_get_pixels(sprdef_button.boxback);
     sprdef_button.cornersize = 8;
 
+    wav64_open(&sfx_cursor, "rom:/core/cursor.wav64");
+    wav64_open(&sfx_confirm, "rom:/core/menu_confirm.wav64");
+    wav64_open(&sfx_back, "rom:/core/menu_back.wav64");
+    wav64_open(&sfx_join, "rom:/core/player_join.wav64");
+    wav64_open(&sfx_leave, "rom:/core/player_leave.wav64");
+
     bdef_backbox_mode->w = 0;
     bdef_backbox_mode->h = 0;
     bdef_backbox_mode->x = 320/2;
@@ -419,6 +433,7 @@ void setup_loop(float deltatime)
                     global_curmenu = MENU_PLAYERS;
                     global_transition = TRANS_FORWARD;
                     global_cursoractive = false;
+                    play_confirm_sfx();
                 }
             }
             break;
@@ -453,7 +468,14 @@ void setup_loop(float deltatime)
                 int count = 0;
                 for (int i=0; i<MAXPLAYERS; i++)
                     if (joypad_get_buttons_pressed(i).start)
+                    {
                         global_playerjoined[i] = !global_playerjoined[i];
+                        if (global_playerjoined[i]) {
+                            wav64_play(&sfx_join, 29);
+                        } else {
+                            wav64_play(&sfx_leave, 28);
+                        }
+                    }
                 for (int i=0; i<MAXPLAYERS; i++)
                     if (global_playerjoined[i])
                         count++;
@@ -477,6 +499,7 @@ void setup_loop(float deltatime)
                             global_cursoractive = false;
                         }
                         core_set_playercount(global_playerjoined);
+                        play_confirm_sfx();
                     }
                 }
                 else
@@ -486,6 +509,7 @@ void setup_loop(float deltatime)
                     global_cursoractive = false;
                     global_curmenu = MENU_MODE;
                     global_transition = TRANS_BACKWARD;
+                    play_back_sfx();
                 }
             }
             break;
@@ -509,12 +533,14 @@ void setup_loop(float deltatime)
                     global_curmenu = MENU_GAMESETUP;
                     global_transition = TRANS_FORWARD;
                     global_cursoractive = false;
+                    play_confirm_sfx();
                 }
                 else if (controller_isb())
                 {
                     global_curmenu = MENU_PLAYERS;
                     global_transition = TRANS_BACKWARD;
                     global_cursoractive = false;
+                    play_back_sfx();
                 }
             }
             break;
@@ -555,12 +581,14 @@ void setup_loop(float deltatime)
                         global_cfg_points++;
                         if (global_cfg_points > 7)
                             global_cfg_points = 1;
+                        play_cursor_sfx();
                     }
                     else if (global_selection == 1)
                     {
                         global_cfg_nextround++;
                         if (global_cfg_nextround > NR_RANDOMGAME)
                             global_cfg_nextround = NR_LEAST;
+                        play_cursor_sfx();
                     }
                     else if ((global_cfg_nextround != NR_FREEPLAY && global_selection == 2) || (global_cfg_nextround == NR_FREEPLAY && global_selection == 0))
                     {
@@ -568,6 +596,7 @@ void setup_loop(float deltatime)
                         global_readyprog = 0;
                         global_curmenu = MENU_BLACKLIST;
                         global_transition = TRANS_FORWARD;
+                        play_confirm_sfx();
                     }
                 }
                 else if (controller_isleft())
@@ -577,6 +606,7 @@ void setup_loop(float deltatime)
                         global_cfg_points--;
                         if (global_cfg_points < 1)
                             global_cfg_points = 7;
+                        play_cursor_sfx();
                     }
                     else if (global_selection == 1)
                     {
@@ -584,6 +614,7 @@ void setup_loop(float deltatime)
                             global_cfg_nextround = NR_RANDOMGAME;
                         else
                             global_cfg_nextround--;
+                        play_cursor_sfx();
                     }
                 }
                 else if (controller_isb())
@@ -592,6 +623,7 @@ void setup_loop(float deltatime)
                     global_cursoractive = false;
                     global_curmenu = MENU_PLAYERS;
                     global_transition = TRANS_BACKWARD;
+                    play_back_sfx();
                 }
                 else if (controller_isstartheld())
                 {
@@ -602,6 +634,7 @@ void setup_loop(float deltatime)
                         global_curmenu = MENU_DONE;
                         global_transition = TRANS_FORWARD;
                         global_cursoractive = false;
+                        play_confirm_sfx();
                     }
                 }
                 else
@@ -621,10 +654,16 @@ void setup_loop(float deltatime)
 
             if (global_cursoractive)
             {
-                if (controller_isa() || controller_isright())
+                if (controller_isa() || controller_isright()) 
+                {
                     global_cfg_blacklist[global_selection] = !global_cfg_blacklist[global_selection];
+                    play_cursor_sfx();
+                }
                 else if (controller_isleft())
+                {
                     global_cfg_blacklist[global_selection] = !global_cfg_blacklist[global_selection];
+                    play_cursor_sfx();
+                }
                 else if (controller_isb())
                 {
                     bool availablegame = false;
@@ -641,6 +680,7 @@ void setup_loop(float deltatime)
                         global_curmenu = MENU_GAMESETUP;
                         global_transition = TRANS_BACKWARD;
                         global_cursoractive = false;
+                        play_back_sfx();
                     }
                 }
             }
@@ -756,12 +796,14 @@ void setup_loop(float deltatime)
             global_selection++;
             if (global_selection >= maxselect)
                 global_selection = 0;
+            play_cursor_sfx();
         }
         else if (controller_isup())
         {
             global_selection--;
             if (global_selection < 0)
                 global_selection = maxselect-1;
+            play_cursor_sfx();
         }
     }
 
@@ -991,6 +1033,11 @@ void setup_cleanup()
     free(bdef_backbox_blacklist);
     free(bdef_button_compete);
     free(bdef_button_freeplay);
+    wav64_close(&sfx_cursor);
+    wav64_close(&sfx_confirm);
+    wav64_close(&sfx_back);
+    wav64_close(&sfx_join);
+    wav64_close(&sfx_leave);
 }
 
 
@@ -1241,4 +1288,19 @@ static bool controller_isstartheld()
         if (joypad_get_buttons(i).start)
             return true;
     return false;
+}
+
+static void play_cursor_sfx()
+{
+    wav64_play(&sfx_cursor, 31);
+}
+
+static void play_confirm_sfx()
+{
+    wav64_play(&sfx_confirm, 30);
+}
+
+static void play_back_sfx()
+{
+    wav64_play(&sfx_back, 30);
 }
