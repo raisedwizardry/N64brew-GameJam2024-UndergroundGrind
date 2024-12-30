@@ -234,9 +234,9 @@ void menu_init()
     roulette = 0.0f;
     if (core_get_nextround() != NR_FREEPLAY)
     {
-        if (is_first_time || core_get_nextround() == NR_RANDOMGAME || core_get_curchooser() >= core_get_playercount())
+        if ((core_get_nextround() != NR_ROBIN && (is_first_time || core_get_nextround() == NR_RANDOMGAME)) || core_get_curchooser() >= core_get_playercount())
         {
-            if (is_first_time || core_get_nextround() == NR_RANDOMGAME)
+            if (core_get_nextround() != NR_ROBIN && (is_first_time || core_get_nextround() == NR_RANDOMGAME))
             {
                 roulette = 2.0f;
                 ai_nexttime = 0.1f;
@@ -284,8 +284,10 @@ void menu_loop(float deltatime)
                 ai_nexttime = 0.1f;
                 select = rand() % minigamecount;
             }
-            yscroll = select;
-            if (minigamecount > 2 && (minigamecount - yscroll) < 3)
+            yscroll = select-1;
+            if (select == 0)
+                yscroll = 0;
+            else if (select == minigamecount-1)
                 yscroll = minigamecount - 3;
         }
         else if (ai_nexttime <= 0)
@@ -511,7 +513,7 @@ void menu_loop(float deltatime)
     }
     if (core_get_nextround() != NR_FREEPLAY)
     {
-        if (core_get_nextround() == NR_RANDOMGAME || is_first_time)
+        if (core_get_nextround() != NR_ROBIN && (is_first_time || core_get_nextround() == NR_RANDOMGAME))
             rdpq_text_print(&(rdpq_textparms_t){.width = 320, .align = ALIGN_CENTER}, FONT_TEXT, 0, 24, "Random game being selected");
         else
             rdpq_text_printf(&(rdpq_textparms_t){.width = 320, .align = ALIGN_CENTER}, FONT_TEXT, 0, 24, "Player %d selecting game", core_get_curchooser()+1);
@@ -524,7 +526,8 @@ void menu_loop(float deltatime)
         is_first_time = false;
         global_lastplayed = select;
         minigame_loadnext(global_minigame_list[sorted_indices[select]].internalname);
-        savestate_save(false);
+        if (core_get_nextround() != NR_FREEPLAY)
+            savestate_save(false);
         core_level_changeto(LEVEL_MINIGAME);
     }
 }

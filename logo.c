@@ -42,7 +42,7 @@ void n64brew_logo(void)
     rspq_syncpoint_t sync = 0;
 
     float mt0 = get_ticks_ms();
-    float angle = T3D_DEG_TO_RAD(-90.0f);
+    float angle = T3D_DEG_TO_RAD(-30.0f);
     float fade_white = 0.0f;
     int anim_part = 0;
     while (1)
@@ -86,7 +86,7 @@ void n64brew_logo(void)
 
         if (anim_part < 3) {
             t3d_frame_start();
-            t3d_viewport_set_projection(&viewport, T3D_DEG_TO_RAD(85.0f), 4.0f, 160.0f);
+            t3d_viewport_set_projection(&viewport, T3D_DEG_TO_RAD(85.0f), 20.0f, 160.0f);
             t3d_viewport_look_at(&viewport, &camPos, &camTarget, &(T3DVec3){{0,1,0}});
             t3d_viewport_attach(&viewport);
             t3d_light_set_ambient(colorAmbient);

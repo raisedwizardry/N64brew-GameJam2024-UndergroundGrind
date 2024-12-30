@@ -96,7 +96,7 @@ void minigame_loadall()
 
 void minigame_loadnext(char* name)
 {
-    debugf("Loading minigame: %s\n", name);
+    //debugf("Loading minigame: %s\n", name);
 
     // Find the minigame with that name
     global_minigame_current = NULL;
@@ -104,7 +104,7 @@ void minigame_loadnext(char* name)
     {
         if (!strcmp(global_minigame_list[i].internalname, name))
         {
-            debugf("Success!\n");
+            //debugf("Success!\n");
             global_minigame_current = &global_minigame_list[i];
             break;
         }
@@ -147,6 +147,17 @@ void minigame_end()
 Minigame* minigame_get_game()
 {
     return global_minigame_current;
+}
+
+
+/*==============================
+    minigame_get_index
+    TODO
+==============================*/
+
+int minigame_get_index()
+{
+    return (global_minigame_current - global_minigame_list);
 }
 
 

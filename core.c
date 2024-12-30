@@ -85,6 +85,21 @@ void core_set_playercount(bool* enabledconts)
     global_core_playercount = plynum;
 }
 
+
+/*==============================
+    core_get_playerconts
+    TODO
+==============================*/
+
+void core_get_playerconts(bool* enabledconts)
+{
+    for (int i=0; i<MAXPLAYERS; i++)
+        enabledconts[i] = false;
+    for (int i=0; i<global_core_playercount; i++)
+        enabledconts[global_core_players[i].port] = true;
+}
+
+
 /*==============================
     core_set_aidifficulty
     Sets the AI difficulty

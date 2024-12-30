@@ -42,6 +42,7 @@ int main()
     audio_init(32000, 3);
     mixer_init(32);
     savestate_initialize();
+    menu_reset();
 
     // Enable RDP debugging
     #if DEBUG_RDP

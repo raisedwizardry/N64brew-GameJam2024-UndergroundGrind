@@ -132,6 +132,7 @@ extern "C" {
     extern bool core_level_waschanged();
 
     extern void core_set_playercount(bool* enabledconts);
+    extern void core_get_playerconts(bool* enabledconts);
     extern void core_set_aidifficulty(AiDiff difficulty);
     extern void core_set_subtick(double subtick);
 

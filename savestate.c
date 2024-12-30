@@ -20,11 +20,11 @@ typedef struct {
     char header[4];
     uint32_t blacklist;
     uint8_t crashedflag;
-    uint8_t playercount;
     uint8_t aidiff;
     uint8_t pointstowin;
-    uint8_t points[4];
     uint8_t nextplaystyle;
+    uint8_t playerconts[MAXPLAYERS];
+    uint8_t points[MAXPLAYERS];
     uint8_t chooser;
     uint8_t curgame;
     uint8_t checksum;
@@ -127,17 +127,18 @@ void savestate_save(bool configonly)
     // Grab the game state
     if (!configonly)
     {
+        bool playerconts[MAXPLAYERS];
         global_gamesave.crashedflag = 1;
-        global_gamesave.playercount = core_get_playercount(); // TODO: Handle controller mapping as well
+        core_get_playerconts(playerconts);
+        for (int i=0; i<MAXPLAYERS; i++)
+            global_gamesave.playerconts[i] = playerconts[i];
         global_gamesave.aidiff = core_get_aidifficulty();
         global_gamesave.pointstowin = results_get_points_to_win();
-        global_gamesave.points[0] = results_get_points(PLAYER_1);
-        global_gamesave.points[1] = results_get_points(PLAYER_2);
-        global_gamesave.points[2] = results_get_points(PLAYER_3);
-        global_gamesave.points[3] = results_get_points(PLAYER_4);
+        for (int i=0; i<MAXPLAYERS; i++)
+            global_gamesave.points[i] = results_get_points(PLAYER_1+i);
         global_gamesave.nextplaystyle = core_get_nextround();
         global_gamesave.chooser = core_get_curchooser();
-        global_gamesave.curgame = 0; // TODO
+        global_gamesave.curgame = minigame_get_index();
         global_gamesave.checksum = calc_checksum();
     }
     
@@ -153,11 +154,15 @@ void savestate_save(bool configonly)
 
 void savestate_load()
 {
+    bool playerconts[MAXPLAYERS];
+
     if (!global_cansave)
         return;
         
     // Recover the game state
-    //core_set_playercount(global_gamesave.playercount); // TODO: Handle controller mapping as well
+    for (int i=0; i<MAXPLAYERS; i++)
+        playerconts[i] = global_gamesave.playerconts[i];
+    core_set_playercount(playerconts);
     core_set_aidifficulty(global_gamesave.aidiff);
     results_set_points_to_win(global_gamesave.pointstowin);
     results_set_points(PLAYER_1, global_gamesave.points[0]);
@@ -166,7 +171,7 @@ void savestate_load()
     results_set_points(PLAYER_4, global_gamesave.points[3]);
     core_set_nextround(global_gamesave.nextplaystyle);
     core_set_curchooser(global_gamesave.chooser);
-    //global_gamesave.curgame; // TODO
+    minigame_loadnext(global_minigame_list[global_gamesave.curgame].internalname);
 }
 
 
@@ -210,39 +215,47 @@ void loadsave_init()
     rdpq_font_style(global_font, 1, &(rdpq_fontstyle_t){.color = RGBA32(255, 255, 255, 255)});
     rdpq_font_style(global_font, 2, &(rdpq_fontstyle_t){.color = RGBA32(148, 145, 8, 255)});
     global_selection = 0;
-    if (!savestate_checkcrashed())
+    if (!savestate_checkcrashed() && global_cansave)
         core_level_changeto(LEVEL_MAINMENU);
 }
 
 void loadsave_loop(float deltatime)
 {
     surface_t* disp;
+    int maxselection = 2;
 
-    if (!savestate_checkcrashed())
+    if (!savestate_checkcrashed() && global_cansave)
         return;
+
+    if (!global_cansave)
+        maxselection = 1;
 
     // Handle controls
     if (controller_isleft())
     {
         global_selection++;
-        if (global_selection > 1)
+        if (global_selection > maxselection-1)
             global_selection = 0;
     }
     else if (controller_isright())
     {
         global_selection--;
         if (global_selection < 0)
-            global_selection = 1;
+            global_selection = maxselection-1;
     }
     else if (controller_isa())
     {
-        if (global_selection == 1)
+        if (savestate_checkcrashed() && global_selection == 0)
         {
             savestate_load();
-            // TODO: Read the minigame from the savestate, load it, and changeto the minigame level
+            core_level_changeto(LEVEL_MINIGAME);
         }
         else
+        {
+            if (savestate_checkcrashed())
+                savestate_clear();
             core_level_changeto(LEVEL_MAINMENU);
+        }
     }
 
     // Get a framebuffer
@@ -250,9 +263,17 @@ void loadsave_loop(float deltatime)
     rdpq_attach(disp, NULL);
 
     // Render text
-    rdpq_text_print(&(rdpq_textparms_t){.width=320, .align=ALIGN_CENTER, .style_id=1}, 0, 320/2, 240/2-32, "A crash was detected.\nWould you like to restore the save?");
-    rdpq_text_print(&(rdpq_textparms_t){.style_id=((global_selection == 0) ? 2 : 1)}, 0, 320/2-64, 240/2+32, "Yes");
-    rdpq_text_print(&(rdpq_textparms_t){.style_id=((global_selection == 1) ? 2 : 1)}, 0, 320/2+64, 240/2+32, "No");
+    if (savestate_checkcrashed())
+    {
+        rdpq_text_print(&(rdpq_textparms_t){.width=320, .align=ALIGN_CENTER, .style_id=1}, 1, 0, 240/2-32, "A crash was detected.\nWould you like to restore the save?");
+        rdpq_text_print(&(rdpq_textparms_t){.style_id=((global_selection == 0) ? 2 : 1)}, 1, 320/2-64, 240/2+32, "Yes");
+        rdpq_text_print(&(rdpq_textparms_t){.style_id=((global_selection == 1) ? 2 : 1)}, 1, 320/2+64, 240/2+32, "No");
+    }
+    else
+    {
+        rdpq_text_print(&(rdpq_textparms_t){.width=320, .align=ALIGN_CENTER, .style_id=1}, 1, 0, 240/2-48, "EEPROM save was not detected.\n\nIf the game crashes, you will\nnot be able to restore it.");
+        rdpq_text_print(&(rdpq_textparms_t){.width=320, .align=ALIGN_CENTER, .style_id=((global_selection == 0) ? 2 : 1)}, 1, 0, 240/2+64, "Ok");
+    }
 
     // Done
     rdpq_detach_show();

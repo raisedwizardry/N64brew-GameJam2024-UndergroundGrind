@@ -53,6 +53,7 @@ extern "C" {
     void      minigame_loadnext(char* name);
     void      minigame_cleanup();
     Minigame* minigame_get_game();
+    int       minigame_get_index();
     bool      minigame_get_ended();
 
 #ifdef __cplusplus
