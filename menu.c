@@ -101,6 +101,9 @@ static sprite_t *btn_round;
 static sprite_t *btn_wide;
 static sprite_t *btn_game;
 static sprite_t *slider;
+static int ai_target;
+static float ai_nexttime;
+static float roulette;
 
 static rdpq_font_t *font;
 static rdpq_font_t *fontdbg;
@@ -226,6 +229,24 @@ void menu_init()
 
     select = global_lastplayed;
 
+    // Handle automatic game selection
+    ai_target = -1;
+    roulette = 0.0f;
+    if (core_get_nextround() != NR_FREEPLAY)
+    {
+        if (is_first_time || core_get_nextround() == NR_RANDOMGAME || core_get_curchooser() >= core_get_playercount())
+        {
+            if (is_first_time || core_get_nextround() == NR_RANDOMGAME)
+            {
+                roulette = 2.0f;
+                ai_nexttime = 0.1f;
+            }
+            else
+                ai_nexttime = 1.0f;
+            ai_target = rand() % minigamecount;
+        }
+    }
+
     // Set the initial menu screen
     set_menu_screen(SCREEN_MINIGAME);
 }
@@ -236,11 +257,52 @@ void menu_loop(float deltatime)
     int selection_offset = 0;
     bool a_pressed = false;
 
-    for (int i=0; i<4; i++) {
-        joypad_buttons_t btn = joypad_get_buttons_pressed(JOYPAD_PORT_1+i);
-        if (btn.a) a_pressed = true;
-        selection_offset = get_selection_offset(joypad_get_direction(JOYPAD_PORT_1+i, JOYPAD_2D_ANY));
-        if (selection_offset != 0) break;
+    if (ai_target == -1)
+    {
+        for (int i=0; i<4; i++) {
+            if (core_get_nextround() != NR_FREEPLAY && i != core_get_curchooser())
+                continue;
+            joypad_buttons_t btn = joypad_get_buttons_pressed(JOYPAD_PORT_1+i);
+            if (btn.a) a_pressed = true;
+            selection_offset = get_selection_offset(joypad_get_direction(JOYPAD_PORT_1+i, JOYPAD_2D_ANY));
+            if (selection_offset != 0) break;
+        }
+    }
+    else
+    {
+        ai_nexttime -= deltatime;
+        if (roulette > 0)
+        {
+            roulette -= deltatime;
+            if (roulette <= 0)
+            {
+                select = ai_target;
+                ai_nexttime = 2.0f;
+            }
+            else if (ai_nexttime <= 0)
+            {
+                ai_nexttime = 0.1f;
+                select = rand() % minigamecount;
+            }
+            yscroll = select;
+            if (minigamecount > 2 && (minigamecount - yscroll) < 3)
+                yscroll = minigamecount - 3;
+        }
+        else if (ai_nexttime <= 0)
+        {
+            if (select != ai_target)
+            {
+                if (select < ai_target)
+                    select++;
+                else
+                    select--;
+                ai_nexttime = 0.5f;
+                if (select == ai_target)
+                    ai_nexttime = 2.0f;
+            }
+            else
+                a_pressed = true;
+        }
     }
 
     if (selection_offset != 0) {
@@ -253,11 +315,14 @@ void menu_loop(float deltatime)
     if (select < 0) select = item_count-1;
     if (select > item_count-1) select = 0;
 
-    if (select < yscroll) {
-        yscroll -= 1;
-    }
-    else if (select > yscroll+2) {
-        yscroll += 1;
+    if (roulette <= 0)
+    {
+        if (select < yscroll) {
+            yscroll -= 1;
+        }
+        else if (select > yscroll+2) {
+            yscroll += 1;
+        }
     }
 
     if (a_pressed) {
@@ -446,7 +511,7 @@ void menu_loop(float deltatime)
     }
     if (core_get_nextround() != NR_FREEPLAY)
     {
-        if (core_get_nextround() == NR_RANDOMGAME)
+        if (core_get_nextround() == NR_RANDOMGAME || is_first_time)
             rdpq_text_print(&(rdpq_textparms_t){.width = 320, .align = ALIGN_CENTER}, FONT_TEXT, 0, 24, "Random game being selected");
         else
             rdpq_text_printf(&(rdpq_textparms_t){.width = 320, .align = ALIGN_CENTER}, FONT_TEXT, 0, 24, "Player %d selecting game", core_get_curchooser()+1);
@@ -456,6 +521,7 @@ void menu_loop(float deltatime)
 
     if (menu_done)
     {
+        is_first_time = false;
         global_lastplayed = select;
         minigame_loadnext(global_minigame_list[sorted_indices[select]].internalname);
         savestate_save(false);

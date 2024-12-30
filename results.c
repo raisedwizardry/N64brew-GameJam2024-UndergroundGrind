@@ -165,8 +165,6 @@ void results_init()
         core_set_curchooser(rand() % MAXPLAYERS);
     }
 
-    debugf("%d has been selected\n", core_get_curchooser()+1);
-
     font = rdpq_font_load("rom:/squarewave.font64");
     rdpq_text_register_font(FONT_TEXT, font);
     rdpq_font_style(font, FONT_STYLE_DEFAULT, &(rdpq_fontstyle_t){.color = RGBA32(0xFF,0xDD,0xDD,0xFF), .outline_color = RGBA32(0x31,0x39,0x3C,0xFF) });
