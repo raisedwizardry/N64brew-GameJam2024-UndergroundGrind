@@ -21,6 +21,8 @@ This file contains the code for the basic menu
 #define FONT_TEXT       1
 #define FONT_DEBUG      2
 
+#define FADETIME        0.5f
+
 #define DEBUGINFO false
 
 typedef enum
@@ -76,11 +78,9 @@ static int yscroll;
 static int minigamecount;
 static int global_lastplayed = 0;
 
-static bool was_minigame = false;
-static surface_t minigame_frame;
-
 // Locals that I now made global
 static bool menu_done;
+static bool menu_quit;
 static bool has_moved_selection;
 static float yselect;
 static float yselect_target;
@@ -93,15 +93,15 @@ static color_t BREWFONT;
 static color_t TEXT_COLOR;
 static color_t WHITE;
 static heap_stats_t heap_stats;
-static sprite_t *logo;
-static sprite_t *jam;
 static sprite_t *bg_pattern;
 static sprite_t *bg_gradient;
 static sprite_t *btn_round;
 static sprite_t *btn_wide;
 static sprite_t *btn_game;
 static sprite_t *slider;
+static sprite_t* spr_a;
 static int ai_target;
+static bool ai_selected;
 static float ai_nexttime;
 static float roulette;
 
@@ -109,6 +109,7 @@ static rdpq_font_t *font;
 static rdpq_font_t *fontdbg;
 static int* sorted_indices;
 
+static float fadeouttime;
 static float time;
 
 void menu_reset()
@@ -179,7 +180,9 @@ void menu_init()
     bool blacklist[global_minigame_count];
     time = 0.0f;
     menu_done = false;
+    menu_quit = false;
     minigamecount = 0;
+    fadeouttime = 0.0f;
 
     BLACK = RGBA32(0x00,0x00,0x00,0xFF);
     ASH_GRAY = RGBA32(0xAD,0xBA,0xBD,0xFF);
@@ -198,14 +201,13 @@ void menu_init()
 
     display_init(RESOLUTION_320x240, DEPTH_16_BPP, 3, GAMMA_NONE, FILTERS_RESAMPLE);
 
-    logo = sprite_load("rom:/n64brew.ia8.sprite");
-    jam = sprite_load("rom:/jam.rgba32.sprite");
     bg_pattern = sprite_load("rom:/pattern.i8.sprite");
     bg_gradient = sprite_load("rom:/gradient.i8.sprite");
     btn_round = sprite_load("rom:/btnRound.ia8.sprite");
     btn_wide = sprite_load("rom:/btnWide.ia8.sprite");
     btn_game = sprite_load("rom:/btnGame.i4.sprite");
     slider = sprite_load("rom:/slider.ia4.sprite");
+    spr_a = sprite_load("rom:/core/AButton.sprite");
     
     font = rdpq_font_load("rom:/squarewave.font64");
     rdpq_text_register_font(FONT_TEXT, font);
@@ -231,6 +233,7 @@ void menu_init()
 
     // Handle automatic game selection
     ai_target = -1;
+    ai_selected = false;
     roulette = 0.0f;
     if (core_get_nextround() != NR_FREEPLAY)
     {
@@ -256,101 +259,104 @@ void menu_loop(float deltatime)
 {
     int selection_offset = 0;
     bool a_pressed = false;
+    bool b_pressed = false;
 
-    if (ai_target == -1)
+    // Handle controls
+    if (!menu_done)
     {
-        for (int i=0; i<4; i++) {
-            if (core_get_nextround() != NR_FREEPLAY && i != core_get_curchooser())
-                continue;
-            joypad_buttons_t btn = joypad_get_buttons_pressed(JOYPAD_PORT_1+i);
-            if (btn.a) a_pressed = true;
-            selection_offset = get_selection_offset(joypad_get_direction(JOYPAD_PORT_1+i, JOYPAD_2D_ANY));
-            if (selection_offset != 0) break;
-        }
-    }
-    else
-    {
-        ai_nexttime -= deltatime;
-        if (roulette > 0)
+        if (ai_target == -1)
         {
-            roulette -= deltatime;
-            if (roulette <= 0)
+            for (int i=0; i<MAXPLAYERS; i++) {
+                if (core_get_nextround() != NR_FREEPLAY && i != core_get_curchooser())
+                    continue;
+                joypad_buttons_t btn = joypad_get_buttons_pressed(JOYPAD_PORT_1+i);
+                if (btn.a) a_pressed = true;
+                if (btn.b) b_pressed = true;
+                selection_offset = get_selection_offset(joypad_get_direction(JOYPAD_PORT_1+i, JOYPAD_2D_ANY));
+                if (selection_offset != 0) break;
+            }
+        }
+        else
+        {
+            ai_nexttime -= deltatime;
+            if (roulette > 0)
             {
-                select = ai_target;
-                ai_nexttime = 2.0f;
+                roulette -= deltatime;
+                if (roulette <= 0)
+                {
+                    select = ai_target;
+                    ai_nexttime = 2.0f;
+                }
+                else if (ai_nexttime <= 0)
+                {
+                    ai_nexttime = 0.1f;
+                    select = rand() % minigamecount;
+                }
+                yscroll = select-1;
+                if (select == 0)
+                    yscroll = 0;
+                else if (select == minigamecount-1)
+                    yscroll = minigamecount - 3;
             }
             else if (ai_nexttime <= 0)
             {
-                ai_nexttime = 0.1f;
-                select = rand() % minigamecount;
-            }
-            yscroll = select-1;
-            if (select == 0)
-                yscroll = 0;
-            else if (select == minigamecount-1)
-                yscroll = minigamecount - 3;
-        }
-        else if (ai_nexttime <= 0)
-        {
-            if (select != ai_target)
-            {
-                if (select < ai_target)
-                    select++;
-                else
-                    select--;
-                ai_nexttime = 0.5f;
-                if (select == ai_target)
-                    ai_nexttime = 2.0f;
-            }
-            else
-                a_pressed = true;
-        }
-    }
-
-    if (selection_offset != 0) {
-        if (!has_moved_selection) select += selection_offset;
-        has_moved_selection = true;
-    } else {
-        has_moved_selection = false;
-    }
-
-    if (select < 0) select = item_count-1;
-    if (select > item_count-1) select = 0;
-
-    if (roulette <= 0)
-    {
-        if (select < yscroll) {
-            yscroll -= 1;
-        }
-        else if (select > yscroll+2) {
-            yscroll += 1;
-        }
-    }
-
-    if (a_pressed) {
-        switch (current_screen) {
-            case SCREEN_MINIGAME: 
-                menu_done = true;
-                break;
-        }
-    } /*else if (btn.b) {
-        switch (current_screen) {
-            case SCREEN_AIDIFFICULTY:
-                set_menu_screen(SCREEN_PLAYERCOUNT);
-                break;
-            case SCREEN_MINIGAME:
-                if (playercount == MAXPLAYERS) {
-                    set_menu_screen(SCREEN_PLAYERCOUNT);
-                } else {
-                    set_menu_screen(SCREEN_AIDIFFICULTY);
+                if (select != ai_target)
+                {
+                    if (select < ai_target)
+                        select++;
+                    else
+                        select--;
+                    ai_nexttime = 0.5f;
+                    if (select == ai_target)
+                        ai_nexttime = 2.0f;
                 }
-                break;
-            default:
-                break;
+                else
+                    ai_selected = true;
+            }
         }
-    }*/
 
-    time += display_get_delta_time();
+        if (selection_offset != 0) {
+            if (!has_moved_selection) select += selection_offset;
+            has_moved_selection = true;
+        } else {
+            has_moved_selection = false;
+        }
+
+        if (select < 0) select = item_count-1;
+        if (select > item_count-1) select = 0;
+
+        if (roulette <= 0)
+        {
+            if (select < yscroll) {
+                yscroll -= 1;
+            }
+            else if (select > yscroll+2) {
+                yscroll += 1;
+            }
+        }
+
+        if (ai_selected)
+        {
+            for (int i=0; i<MAXPLAYERS; i++) {
+                joypad_buttons_t btn = joypad_get_buttons_pressed(JOYPAD_PORT_1+i);
+                if (btn.a)
+                    a_pressed = true;
+            }
+        }
+
+        if (a_pressed) {
+            menu_done = true;
+            fadeouttime = FADETIME;
+        } else if (b_pressed && core_get_nextround() == NR_FREEPLAY) {
+            menu_done = true;
+            menu_quit = true;
+            fadeouttime = FADETIME;
+        }
+    }
+
+    time += deltatime;
+    if (fadeouttime > 0)
+        fadeouttime -= deltatime;
     surface_t *disp = display_get();
 
     rdpq_attach(disp, NULL);
@@ -511,56 +517,82 @@ void menu_loop(float deltatime)
         rdpq_text_printf(NULL, FONT_DEBUG, 10, 15, 
             "Mem: %d KiB", heap_stats.used/1024);
     }
-    if (core_get_nextround() != NR_FREEPLAY)
+    if (core_get_nextround() != NR_FREEPLAY && !menu_done)
     {
-        if (core_get_nextround() != NR_ROBIN && (is_first_time || core_get_nextround() == NR_RANDOMGAME))
+        if (ai_selected)
+        {
+            if (((int)(time*4))%2 == 0)
+            {
+                rdpq_set_mode_standard();
+                rdpq_mode_combiner(RDPQ_COMBINER1((TEX0,0,PRIM,0), (TEX0,0,PRIM,0)));
+                rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
+                rdpq_set_prim_color(RGBA32(255, 255, 255, 255));
+                rdpq_sprite_blit(spr_a, 185, 24-11, NULL);
+                rdpq_text_print(&(rdpq_textparms_t){.width = 320, .align = ALIGN_CENTER}, FONT_TEXT, 0, 24, "Game selected, press      to begin");
+            }
+        }
+        else if (core_get_nextround() != NR_ROBIN && (is_first_time || core_get_nextround() == NR_RANDOMGAME))
             rdpq_text_print(&(rdpq_textparms_t){.width = 320, .align = ALIGN_CENTER}, FONT_TEXT, 0, 24, "Random game being selected");
         else
             rdpq_text_printf(&(rdpq_textparms_t){.width = 320, .align = ALIGN_CENTER}, FONT_TEXT, 0, 24, "Player %d selecting game", core_get_curchooser()+1);
     }
+
+    // Fade in
+    if (time < FADETIME)
+    {
+        rdpq_set_mode_standard();
+        rdpq_mode_combiner(RDPQ_COMBINER_FLAT);
+        rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
+        rdpq_set_prim_color(RGBA32(0, 0, 0, 255*(1-(time/FADETIME))));
+        rdpq_fill_rectangle(0, 0, 320, 240);
+    }
+
+    // Fade out
+    if (menu_done)
+    {
+        if (fadeouttime < 0)
+            fadeouttime = 0;
+        rdpq_set_mode_standard();
+        rdpq_mode_combiner(RDPQ_COMBINER_FLAT);
+        rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
+        rdpq_set_prim_color(RGBA32(0, 0, 0, 255*(1-(fadeouttime/FADETIME))));
+        rdpq_fill_rectangle(0, 0, 320, 240);
+    }    
         
     rdpq_detach_show();
 
-    if (menu_done)
+    if (menu_done && fadeouttime <= 0)
     {
-        is_first_time = false;
-        global_lastplayed = select;
-        minigame_loadnext(global_minigame_list[sorted_indices[select]].internalname);
-        if (core_get_nextround() != NR_FREEPLAY)
-            savestate_save(false);
-        core_level_changeto(LEVEL_MINIGAME);
+        if (!menu_quit)
+        {
+            is_first_time = false;
+            global_lastplayed = select;
+            minigame_loadnext(global_minigame_list[sorted_indices[select]].internalname);
+            if (core_get_nextround() != NR_FREEPLAY)
+                savestate_save(false);
+            core_level_changeto(LEVEL_MINIGAME);
+        }
+        else
+            core_level_changeto(LEVEL_MAINMENU);
     }
 }
 
 void menu_cleanup()
 {
-    is_first_time = false;
     free(sorted_indices);
     rspq_wait();
     
-    sprite_free(jam);
-    sprite_free(logo);
     sprite_free(bg_pattern);
     sprite_free(bg_gradient);
     sprite_free(btn_round);
     sprite_free(btn_wide);
     sprite_free(btn_game);
     sprite_free(slider);
+    sprite_free(spr_a);
 
     rdpq_text_unregister_font(FONT_TEXT);
     rdpq_text_unregister_font(FONT_DEBUG);
     rdpq_font_free(font);
     rdpq_font_free(fontdbg);
     display_close();
-}
-
-void menu_copy_minigame_frame()
-{
-    surface_t frame = display_get_current_framebuffer();
-
-    was_minigame = true;
-    
-    surface_free(&minigame_frame);
-    minigame_frame = surface_alloc(surface_get_format(&frame), frame.width, frame.height);
-    memcpy(minigame_frame.buffer, frame.buffer, frame.stride * frame.height);
 }

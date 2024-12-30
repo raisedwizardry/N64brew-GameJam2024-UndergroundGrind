@@ -1120,7 +1120,7 @@ static void drawfade(float time)
     rdpq_set_mode_standard();
     rdpq_mode_combiner(RDPQ_COMBINER_FLAT);
     rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
-    rdpq_set_prim_color(color_from_packed32(0x000000FF));
+    rdpq_set_prim_color(RGBA32(0, 0, 0, 255));
 
     // Edge case, avoid all the calculations below
     if (time < 0)

@@ -262,6 +262,13 @@ void loadsave_loop(float deltatime)
     disp = display_get();
     rdpq_attach(disp, NULL);
 
+    // Black background
+    rdpq_set_mode_standard();
+    rdpq_mode_combiner(RDPQ_COMBINER_FLAT);
+    rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
+    rdpq_set_prim_color(RGBA32(0, 0, 0, 255));
+    rdpq_fill_rectangle(0, 0, 320, 240);
+
     // Render text
     if (savestate_checkcrashed())
     {
