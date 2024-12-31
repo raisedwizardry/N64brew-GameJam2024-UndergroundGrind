@@ -5,6 +5,7 @@ Input contains everything needed to collect input from the system from Libdragon
 =================*/
 #include <libdragon.h>
 #include "AF_Input.h"
+#include "../../core.h"
 #include "ECS/Entities/AF_ECS.h"
 
 // Key mappings for n64 controller to joypad_button struct, polled from libdragon
@@ -36,25 +37,25 @@ void AF_Input_Update(AF_Input* _input){
 	joypad_poll();
 
 		// Player 1
-        joypad_inputs_t inputs = joypad_get_inputs(JOYPAD_PORT_1);
-		joypad_buttons_t pressed1 = joypad_get_buttons_pressed(JOYPAD_PORT_1);
-        joypad_buttons_t held1 = joypad_get_buttons_held(JOYPAD_PORT_1);
+        joypad_inputs_t inputs = joypad_get_inputs(core_get_playercontroller(PLAYER_1));
+		joypad_buttons_t pressed1 = joypad_get_buttons_pressed(core_get_playercontroller(PLAYER_1));
+        joypad_buttons_t held1 = joypad_get_buttons_held(core_get_playercontroller(PLAYER_1));
 
 		// Player 2
-        joypad_inputs_t inputs2 = joypad_get_inputs(JOYPAD_PORT_2);
-		joypad_buttons_t pressed2 = joypad_get_buttons_pressed(JOYPAD_PORT_2);
-        joypad_buttons_t held2 = joypad_get_buttons_held(JOYPAD_PORT_2);
+        joypad_inputs_t inputs2 = joypad_get_inputs(core_get_playercontroller(PLAYER_2));
+		joypad_buttons_t pressed2 = joypad_get_buttons_pressed(core_get_playercontroller(PLAYER_2));
+        joypad_buttons_t held2 = joypad_get_buttons_held(core_get_playercontroller(PLAYER_2));
 
 
 		// Player 3
-        joypad_inputs_t inputs3 = joypad_get_inputs(JOYPAD_PORT_3);
-		joypad_buttons_t pressed3 = joypad_get_buttons_pressed(JOYPAD_PORT_3);
-        joypad_buttons_t held3 = joypad_get_buttons_held(JOYPAD_PORT_3);
+        joypad_inputs_t inputs3 = joypad_get_inputs(core_get_playercontroller(PLAYER_3));
+		joypad_buttons_t pressed3 = joypad_get_buttons_pressed(core_get_playercontroller(PLAYER_3));
+        joypad_buttons_t held3 = joypad_get_buttons_held(core_get_playercontroller(PLAYER_3));
 
 		// Player 4
-        joypad_inputs_t inputs4 = joypad_get_inputs(JOYPAD_PORT_4);
-		joypad_buttons_t pressed4 = joypad_get_buttons_pressed(JOYPAD_PORT_4);
-        joypad_buttons_t held4 = joypad_get_buttons_held(JOYPAD_PORT_4);
+        joypad_inputs_t inputs4 = joypad_get_inputs(core_get_playercontroller(PLAYER_4));
+		joypad_buttons_t pressed4 = joypad_get_buttons_pressed(core_get_playercontroller(PLAYER_4));
+        joypad_buttons_t held4 = joypad_get_buttons_held(core_get_playercontroller(PLAYER_4));
 		
 		// flush the keys
 		for(int i = 0; i < AF_INPUT_KEYS_MAPPED; ++i){
