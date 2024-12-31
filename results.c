@@ -46,6 +46,7 @@ static sprite_t *icon_playerselected;
 static sprite_t *icon_star;
 
 static wav64_t sfx_point;
+static wav64_t sfx_confirm;
 static bool point_sfx_played;
 
 static float time;
@@ -186,6 +187,7 @@ void results_init()
     icon_star = sprite_load("rom:/iconStar.ia8.sprite");
 
     wav64_open(&sfx_point, "rom:/core/Point.wav64");
+    wav64_open(&sfx_confirm, "rom:/core/menu_confirm.wav64");
     point_sfx_played = false;
 
     time = 0;
@@ -512,6 +514,7 @@ void results_loop(float deltatime)
 
     bool confirm_pressed = btn[0].a || btn[1].a || btn[2].a || btn[3].a;
     if (can_confirm && !fading_out && confirm_pressed) {
+        wav64_play(&sfx_confirm, 31);
         if (core_get_nextround() == NR_RANDOMGAME) {
             fading_out = true;
             fade_out_start = time;
@@ -543,5 +546,6 @@ void results_cleanup()
     sprite_free(icon_playerselected);
     sprite_free(icon_star);
     wav64_close(&sfx_point);
+    wav64_close(&sfx_confirm);
     display_close();
 }
