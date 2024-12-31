@@ -132,7 +132,6 @@ static wav64_t sfx_leave;
 static void setup_draw(float deltatime);
 static void drawbox(BoxDef* bd, color_t col);
 static void drawprogress(int x, int y, color_t col);
-static void drawfade(float time);
 static void culledges(BoxDef* back);
 static void uncull(void);
 static bool is_menuvisible(CurrentMenu menu);
@@ -1149,7 +1148,7 @@ static void uncull(void)
     rdpq_set_scissor(0, 0, 320, 240);
 }
 
-static void drawfade(float time)
+void drawfade(float time)
 {
     if (time > 1)
         return;

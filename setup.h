@@ -5,4 +5,6 @@
     extern void setup_loop(float deltatime);
     extern void setup_cleanup();
 
+    void drawfade(float time);
+
 #endif

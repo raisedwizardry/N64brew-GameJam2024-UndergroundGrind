@@ -14,6 +14,7 @@ player, AI, and game loop information.
 #include "results.h"
 #include "logo.h"
 #include "savestate.h"
+#include "title.h"
 
 
 /*********************************
