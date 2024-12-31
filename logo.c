@@ -4,6 +4,8 @@
 #include <t3d/t3dmodel.h>
 #include "core.h"
 
+#define SPINSPEED 0.9f
+
 
 // Easing function for quadratic ease-out
 //  t = current time
@@ -36,7 +38,7 @@ void n64brew_logo(void)
     rspq_syncpoint_t sync = 0;
 
     float mt0 = get_ticks_ms();
-    float angle = T3D_DEG_TO_RAD(-30.0f);
+    float angle = T3D_DEG_TO_RAD(-90.0f);
     float fade_white = 0.0f;
     int anim_part = 0;
     while (1)
@@ -44,7 +46,7 @@ void n64brew_logo(void)
         float tt = get_ticks_ms() - mt0;
         if (tt < 1500) {
             anim_part = 0;
-            angle += 0.015f;
+            angle += SPINSPEED*display_get_delta_time();
         } else if (tt < 3500) {
             anim_part = 1;
             tt -= 1500;
@@ -52,12 +54,12 @@ void n64brew_logo(void)
             camTarget.v[1] = ease_out_quad(tt, 0.0f, -5.0f, 2000.0f);
             camPos.v[1] = ease_out_quad(tt, 0.0f, -5.0f, 2000.0f);
             camPos.v[2] = ease_out_quad(tt, 50.0f, 110.0f, 2000.0f);
-            angle += 0.015f;
+            angle += SPINSPEED*display_get_delta_time();
         } else if (tt < 3800) {
             anim_part = 2;
             fade_white = (tt-3500) / 300.0f;
             if (fade_white > 1.0f) fade_white = 1.0f;
-            angle += 0.015f;
+            angle += SPINSPEED*display_get_delta_time();
         } else if (tt < 6500) {
             anim_part = 3;
             fade_white = 1.0f - (tt-3800) / 300.0f;
