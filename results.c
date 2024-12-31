@@ -354,6 +354,9 @@ void results_loop(float deltatime)
             currentlychosen = core_get_curchooser();
         }
 
+        if (is_announcing)
+            chooseanim = ANIM_CHOOSEPLAYER_DONE;
+
         // Do the selection animation
         if (chooseanim >= ANIM_CHOOSEPLAYER_MOVE && chooseanim < ANIM_CHOOSEPLAYER_SELECT) {
             int j = 0;
