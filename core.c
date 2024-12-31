@@ -212,8 +212,8 @@ void core_initlevels()
     global_core_curlevel = NULL;
 
     global_core_alllevels[LEVEL_LOADSAVE].funcPointer_init      = loadsave_init;
-    global_core_alllevels[LEVEL_LOADSAVE].funcPointer_loop      = NULL;
-    global_core_alllevels[LEVEL_LOADSAVE].funcPointer_fixedloop = loadsave_loop;
+    global_core_alllevels[LEVEL_LOADSAVE].funcPointer_loop      = loadsave_loop;
+    global_core_alllevels[LEVEL_LOADSAVE].funcPointer_fixedloop = NULL;
     global_core_alllevels[LEVEL_LOADSAVE].funcPointer_cleanup   = loadsave_cleanup;
 
     global_core_alllevels[LEVEL_MAINMENU].funcPointer_init      = titlescreen_init;

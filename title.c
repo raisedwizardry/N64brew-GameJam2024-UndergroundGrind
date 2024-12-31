@@ -15,6 +15,7 @@ static bool global_is_fading;
 static sprite_t *global_sprite_n64brew;
 static sprite_t *global_sprite_jam;
 static wav64_t sfx_title_confirm;
+static xm64player_t global_music;
 
 static T3DModel *model;
 static T3DSkeleton skeleton;
@@ -67,6 +68,10 @@ void titlescreen_init()
     global_font = rdpq_font_load("rom:/squarewave_l.font64");
     rdpq_text_register_font(1, global_font);
     wav64_open(&sfx_title_confirm, "rom:/core/title_confirm.wav64");
+    xm64player_open(&global_music, "rom:/core/Menus.xm64");
+    xm64player_seek(&global_music, 0, 0, 0);
+    xm64player_set_vol(&global_music, 1.0f);
+    xm64player_play(&global_music, 0);
 
     int model_count = sizeof(models)/sizeof(models[0]);
     cur_model = &models[rand()%model_count];
@@ -188,6 +193,8 @@ void titlescreen_cleanup()
     sprite_free(global_sprite_jam);
     sprite_free(global_sprite_n64brew);
     wav64_close(&sfx_title_confirm);
+    xm64player_stop(&global_music);
+    xm64player_close(&global_music);
     rspq_block_free(model_block);
     free_uncached(mtx);
     if (cur_model->has_skeleton) {

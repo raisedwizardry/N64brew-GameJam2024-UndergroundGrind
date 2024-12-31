@@ -4,6 +4,7 @@
 #include "core.h"
 #include "minigame.h"
 #include "results.h"
+#include "menu.h"
 #include "savestate.h"
 
 
@@ -123,6 +124,7 @@ static wav64_t sfx_confirm;
 static wav64_t sfx_back;
 static wav64_t sfx_join;
 static wav64_t sfx_leave;
+static xm64player_t global_music;
 
 
 /*=============================================================
@@ -345,6 +347,10 @@ void setup_init()
     wav64_open(&sfx_back, "rom:/core/menu_back.wav64");
     wav64_open(&sfx_join, "rom:/core/player_join.wav64");
     wav64_open(&sfx_leave, "rom:/core/player_leave.wav64");
+    xm64player_open(&global_music, "rom:/core/Menus.xm64");
+    xm64player_seek(&global_music, 27, 0, 0);
+    xm64player_set_vol(&global_music, 0.0f);
+    xm64player_play(&global_music, 0);
 
     bdef_backbox_mode->w = 0;
     bdef_backbox_mode->h = 0;
@@ -690,6 +696,7 @@ void setup_loop(float deltatime)
             if (global_fadetime > 0.0f)
             {
                 global_fadetime -= deltatime;
+                xm64player_set_vol(&global_music, clamp(global_fadetime, 0, 1));
                 if (global_fadetime < 0)
                 {
                     results_set_points_to_win(global_cfg_points);
@@ -697,6 +704,7 @@ void setup_loop(float deltatime)
                     core_set_curchooser(PLAYER_1);
                     savestate_setblacklist(global_cfg_blacklist);
                     savestate_save(true);
+                    menu_reset();
                     core_level_changeto(LEVEL_MINIGAMESELECT);
                 }
             }
@@ -994,7 +1002,11 @@ void setup_draw(float deltatime)
 
     // Draw the screen wipe effect
     if (global_curmenu != MENU_DONE && global_fadetime < 1.0f)
+    {
         global_fadetime += deltatime;
+        xm64player_set_vol(&global_music, clamp(global_fadetime, 0, 1));
+    }
+
     drawfade(global_fadetime);
 
     // Done
@@ -1037,6 +1049,8 @@ void setup_cleanup()
     wav64_close(&sfx_back);
     wav64_close(&sfx_join);
     wav64_close(&sfx_leave);
+    xm64player_stop(&global_music);
+    xm64player_close(&global_music);
 }
 
 

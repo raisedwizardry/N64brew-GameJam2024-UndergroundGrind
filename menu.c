@@ -30,46 +30,7 @@ typedef enum
     SCREEN_MINIGAME
 } menu_screen;
 
-/*==============================
-    minigame_sort
-    Sorts two names alphabetically
-    @param  The first name
-    @param  The second name
-    @return -1 if a is less than b, 1 if a is greater than b, and 0 if they are equal
-==============================*/
-
-static int minigame_sort(const void *a, const void *b)
-{
-    int idx1 = *(int*)a, idx2 = *(int*)b;
-    return strcasecmp(global_minigame_list[idx1].definition.gamename, global_minigame_list[idx2].definition.gamename);
-}
-
-/*==============================
-    get_selection_offset
-    Converts a joypad 8-way direction into a vertical selection offset
-    @param  The joypad direction
-    @return The selection offset
-==============================*/
-
-int get_selection_offset(joypad_8way_t direction)
-{
-    switch (direction) {
-    case JOYPAD_8WAY_UP_RIGHT:
-    case JOYPAD_8WAY_UP:
-    case JOYPAD_8WAY_UP_LEFT:
-    case JOYPAD_8WAY_LEFT:
-        return -1;
-    case JOYPAD_8WAY_DOWN_LEFT:
-    case JOYPAD_8WAY_DOWN:
-    case JOYPAD_8WAY_DOWN_RIGHT:
-    case JOYPAD_8WAY_RIGHT:
-        return 1;
-    default:
-        return 0;
-    }
-}
-
-static bool is_first_time = true;
+static bool is_first_time = false;
 
 static menu_screen current_screen;  // Current menu screen
 static int item_count;              // The number of selection items in the current screen
@@ -112,9 +73,52 @@ static int* sorted_indices;
 static wav64_t sfx_cursor;
 static wav64_t sfx_confirm;
 static wav64_t sfx_back;
+static wav64_t sfx_drumroll;
+static wav64_t sfx_crash;
+static xm64player_t global_music;
 
 static float fadeouttime;
 static float time;
+
+
+/*==============================
+    minigame_sort
+    Sorts two names alphabetically
+    @param  The first name
+    @param  The second name
+    @return -1 if a is less than b, 1 if a is greater than b, and 0 if they are equal
+==============================*/
+
+static int minigame_sort(const void *a, const void *b)
+{
+    int idx1 = *(int*)a, idx2 = *(int*)b;
+    return strcasecmp(global_minigame_list[idx1].definition.gamename, global_minigame_list[idx2].definition.gamename);
+}
+
+/*==============================
+    get_selection_offset
+    Converts a joypad 8-way direction into a vertical selection offset
+    @param  The joypad direction
+    @return The selection offset
+==============================*/
+
+int get_selection_offset(joypad_8way_t direction)
+{
+    switch (direction) {
+    case JOYPAD_8WAY_UP_RIGHT:
+    case JOYPAD_8WAY_UP:
+    case JOYPAD_8WAY_UP_LEFT:
+    case JOYPAD_8WAY_LEFT:
+        return -1;
+    case JOYPAD_8WAY_DOWN_LEFT:
+    case JOYPAD_8WAY_DOWN:
+    case JOYPAD_8WAY_DOWN_RIGHT:
+    case JOYPAD_8WAY_RIGHT:
+        return 1;
+    default:
+        return 0;
+    }
+}
 
 void menu_reset()
 {
@@ -212,7 +216,7 @@ void menu_init()
     btn_game = sprite_load("rom:/btnGame.i4.sprite");
     slider = sprite_load("rom:/slider.ia4.sprite");
     spr_a = sprite_load("rom:/core/AButton.sprite");
-    
+
     font = rdpq_font_load("rom:/squarewave.font64");
     rdpq_text_register_font(FONT_TEXT, font);
     rdpq_font_style(font, 0, &(rdpq_fontstyle_t){.color = TEXT_COLOR, .outline_color = GUN_METAL });
@@ -226,6 +230,12 @@ void menu_init()
     wav64_open(&sfx_cursor, "rom:/core/cursor.wav64");
     wav64_open(&sfx_confirm, "rom:/core/menu_confirm.wav64");
     wav64_open(&sfx_back, "rom:/core/menu_back.wav64");
+    wav64_open(&sfx_drumroll, "rom:/core/DrumRoll.wav64");
+    wav64_open(&sfx_crash, "rom:/core/Crash.wav64");
+    xm64player_open(&global_music, "rom:/core/Menus.xm64");
+    xm64player_seek(&global_music, 62, 0, 0);
+    xm64player_set_vol(&global_music, 0.0f);
+    xm64player_play(&global_music, 0);
 
     savestate_getblacklist(blacklist);
     for (int i = 0; i < global_minigame_count; i++)
@@ -250,6 +260,7 @@ void menu_init()
             if (core_get_nextround() != NR_ROBIN && (is_first_time || core_get_nextround() == NR_RANDOMGAME))
             {
                 roulette = 2.0f;
+                wav64_play(&sfx_drumroll, 30);
                 ai_nexttime = 0.1f;
             }
             else
@@ -277,10 +288,10 @@ void menu_loop(float deltatime)
             for (int i=0; i<MAXPLAYERS; i++) {
                 if (core_get_nextround() != NR_FREEPLAY && i != core_get_curchooser())
                     continue;
-                joypad_buttons_t btn = joypad_get_buttons_pressed(JOYPAD_PORT_1+i);
+                joypad_buttons_t btn = joypad_get_buttons_pressed(core_get_playercontroller(PLAYER_1+i));
                 if (btn.a) a_pressed = true;
                 if (btn.b) b_pressed = true;
-                selection_offset = get_selection_offset(joypad_get_direction(JOYPAD_PORT_1+i, JOYPAD_2D_ANY));
+                selection_offset = get_selection_offset(joypad_get_direction(core_get_playercontroller(PLAYER_1+i), JOYPAD_2D_ANY));
                 if (selection_offset != 0) break;
             }
         }
@@ -292,6 +303,7 @@ void menu_loop(float deltatime)
                 roulette -= deltatime;
                 if (roulette <= 0)
                 {
+                    wav64_play(&sfx_crash, 30);
                     select = ai_target;
                     ai_nexttime = 2.0f;
                 }
@@ -314,12 +326,16 @@ void menu_loop(float deltatime)
                         select++;
                     else
                         select--;
+                    wav64_play(&sfx_cursor, 31);
                     ai_nexttime = 0.5f;
                     if (select == ai_target)
                         ai_nexttime = 2.0f;
                 }
-                else
+                else if (!ai_selected)
+                {
+                    wav64_play(&sfx_confirm, 30);
                     ai_selected = true;
+                }
             }
         }
 
@@ -369,7 +385,11 @@ void menu_loop(float deltatime)
 
     time += deltatime;
     if (fadeouttime > 0)
+    {
         fadeouttime -= deltatime;
+        if (fadeouttime < 0)
+            fadeouttime = 0;
+    }
     surface_t *disp = display_get();
 
     rdpq_attach(disp, NULL);
@@ -553,6 +573,7 @@ void menu_loop(float deltatime)
     // Fade in
     if (time < FADETIME)
     {
+        xm64player_set_vol(&global_music, (time/FADETIME));
         rdpq_set_mode_standard();
         rdpq_mode_combiner(RDPQ_COMBINER_FLAT);
         rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
@@ -563,8 +584,7 @@ void menu_loop(float deltatime)
     // Fade out
     if (menu_done)
     {
-        if (fadeouttime < 0)
-            fadeouttime = 0;
+        xm64player_set_vol(&global_music, fadeouttime/FADETIME);
         rdpq_set_mode_standard();
         rdpq_mode_combiner(RDPQ_COMBINER_FLAT);
         rdpq_mode_blender(RDPQ_BLENDER_MULTIPLY);
@@ -611,6 +631,10 @@ void menu_cleanup()
     wav64_close(&sfx_cursor);
     wav64_close(&sfx_confirm);
     wav64_close(&sfx_back);
+    wav64_close(&sfx_drumroll);
+    wav64_close(&sfx_crash);
+    xm64player_stop(&global_music);
+    xm64player_close(&global_music);
 
     display_close();
 }

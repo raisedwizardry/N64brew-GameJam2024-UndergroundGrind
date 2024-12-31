@@ -47,7 +47,13 @@ static sprite_t *icon_star;
 
 static wav64_t sfx_point;
 static wav64_t sfx_confirm;
+static wav64_t sfx_winner;
+static wav64_t sfx_roulette1;
+static wav64_t sfx_roulette2;
 static bool point_sfx_played;
+static bool winner_sfx_played;
+static bool selected_sfx_played;
+static xm64player_t global_music;
 
 static float time;
 
@@ -188,7 +194,16 @@ void results_init()
 
     wav64_open(&sfx_point, "rom:/core/Point.wav64");
     wav64_open(&sfx_confirm, "rom:/core/menu_confirm.wav64");
+    wav64_open(&sfx_winner, "rom:/core/ResultsWinner.wav64");
+    wav64_open(&sfx_roulette1, "rom:/core/RoulettePlayer.wav64");
+    wav64_open(&sfx_roulette2, "rom:/core/RouletteDone.wav64");
     point_sfx_played = false;
+    winner_sfx_played = false;
+    selected_sfx_played = false;
+    xm64player_open(&global_music, "rom:/core/Menus.xm64");
+    xm64player_seek(&global_music, 37, 0, 0);
+    xm64player_set_vol(&global_music, 0.0f);
+    xm64player_play(&global_music, 0);
 
     time = 0;
     fading_out = false;
@@ -289,13 +304,33 @@ void results_loop(float deltatime)
     
     float bg_fade = time < FADE_IN_DURATION ? (time/FADE_IN_DURATION) : 1.0f;
     menu_draw_bg(bg_pattern, bg_gradient, time * 12.0f, bg_fade);
+    if (fading_out)
+        xm64player_set_vol(&global_music, (((1-(time-fade_out_start)/FADE_OUT_DURATION) < 0) ? 0 : (1-(time-fade_out_start)/FADE_OUT_DURATION)));
+    else
+        xm64player_set_vol(&global_music, ((time/FADE_IN_DURATION > 1) ? 1 : time/FADE_IN_DURATION));
 
     bool can_confirm = time - confirm_start > CONFIRM_DELAY;
     bool is_announcing = ending && time > ANNOUNCE_DELAY;
 
     if (time > POINTS_SFX_DELAY && !point_sfx_played) {
-        wav64_play(&sfx_point, 16);
+        bool someonescored = false;
+        for (PlyNum i = 0; i < MAXPLAYERS; i++)
+        {
+            if (core_get_winner(i))
+            {
+                someonescored = true;
+                break;
+            }
+        }
+        if (someonescored)
+            wav64_play(&sfx_point, 16);
         point_sfx_played = true;
+    }
+
+    if (is_announcing && time > ANNOUNCE_DELAY && !winner_sfx_played) {
+        wav64_play(&sfx_winner, 16);
+        xm64player_stop(&global_music);
+        winner_sfx_played = true;
     }
 
     // Selection animation
@@ -324,12 +359,21 @@ void results_loop(float deltatime)
             int j = 0;
             int curchoice = ((int)((chooseanim - ANIM_CHOOSEPLAYER_MOVE)*(choosecount*3))) % (choosecount*3);
             int possible[choosecount];
+            int finalchoice;
             for (int i=0; i<MAXPLAYERS; i++)
                 if (canbechosen[i])
                     possible[j++] = i;
-            currentlychosen = possible[curchoice % choosecount];
+            finalchoice = possible[curchoice % choosecount];
+            if (currentlychosen != finalchoice)
+                wav64_play(&sfx_roulette1, 16);
+            currentlychosen = finalchoice;
         } else if (chooseanim >= ANIM_CHOOSEPLAYER_SELECT && chooseanim < ANIM_CHOOSEPLAYER_SELECTED) {
             currentlychosen = core_get_curchooser();
+            if (!selected_sfx_played)
+            {
+                wav64_play(&sfx_roulette2, 16);
+                selected_sfx_played = true;
+            }
         } else if (!fading_out && chooseanim >= ANIM_CHOOSEPLAYER_DONE) {
             fading_out = true;
             fade_out_start = time;
@@ -524,7 +568,6 @@ void results_loop(float deltatime)
 
     if (fading_out && time > fade_out_start + FADE_OUT_DURATION + FADE_OUT_POST_DELAY) {
         if (ending) {
-            menu_reset();
             results_reset_points();
             savestate_clear();
             core_level_changeto(LEVEL_MAINMENU);
@@ -547,5 +590,10 @@ void results_cleanup()
     sprite_free(icon_star);
     wav64_close(&sfx_point);
     wav64_close(&sfx_confirm);
+    wav64_close(&sfx_winner);
+    wav64_close(&sfx_roulette1);
+    wav64_close(&sfx_roulette2);
+    xm64player_stop(&global_music);
+    xm64player_close(&global_music);
     display_close();
 }
