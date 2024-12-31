@@ -50,7 +50,7 @@ $(FILESYSTEM_DIR)/avanto/banner%font64 $(FILESYSTEM_DIR)/avanto/timer%font64: $(
 	@mkdir -p $(dir $@)
 	@echo "    [AVANTO FONT] $@"
 	$(N64_MKFONT) --outline 2 --range 20-5A -s 100 -o $(dir $@) "$<"
-	mv "$(dir $@)/squarewave.font64" "$@"
+	mv "$(dir $@)/squarewave.font64" $(FILESYSTEM_DIR)/avanto/banner.font64
 	@echo "    [AVANTO FONT] $@"
 	$(N64_MKFONT) --outline 1 --range 30-39 -s 48 --ellipsis 30,3 -o $(dir $@) "$<"
-	mv "$(dir $@)/squarewave.font64" "$@"
+	mv "$(dir $@)/squarewave.font64" $(FILESYSTEM_DIR)/avanto/timer.font64
