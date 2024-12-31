@@ -21,6 +21,7 @@ static T3DModel *model;
 static T3DSkeleton skeleton;
 static T3DViewport viewport;
 static T3DMat4FP *mtx;
+static T3DMat4FP *mtx2;
 static rspq_block_t *model_block;
 static rspq_syncpoint_t sync;
 
@@ -31,23 +32,28 @@ typedef struct
     const char *path;
     float scale;
     T3DVec3 offset;
+    T3DVec3 rotation;
     bool has_skeleton;
 } model_data;
 
 static model_data models[] = {
-    {.path = "rom:/avanto/guy.t3dm", .scale = 0.5f, .offset = {{0, -35, 0}}, .has_skeleton = true},
-    {.path = "rom:/avanto/ukko.t3dm", .scale = 0.5f, .offset = {{0, -35, 0}}, .has_skeleton = true},
-    {.path = "rom:/furball/fastcat.t3dm", .scale = 0.1f, .offset = {{0, 0, 0}}, .has_skeleton = true},
-    {.path = "rom:/larcenygame/foxThief.t3dm", .scale = 0.4f, .offset = {{0, -35, 0}}, .has_skeleton = true},
-    {.path = "rom:/larcenygame/dogGuard.t3dm", .scale = 0.4f, .offset = {{0, -35, 0}}, .has_skeleton = true},
-    {.path = "rom:/lucker/snake.t3dm", .scale = 0.2f, .offset = {{0, -25, 0}}, .has_skeleton = true},
+    {.path = "rom:/avanto/guy.t3dm", .scale = 0.45f, .offset = {{0, -35, 0}}, .has_skeleton = true},
+    {.path = "rom:/avanto/ukko.t3dm", .scale = 0.45f, .offset = {{0, -35, 0}}, .has_skeleton = true},
+    {.path = "rom:/furball/fastcat.t3dm", .scale = 0.07f, .offset = {{0, -7, 0}}, .has_skeleton = true},
+    {.path = "rom:/larcenygame/foxThief.t3dm", .scale = 0.35f, .offset = {{0, -35, 0}}, .has_skeleton = true},
+    {.path = "rom:/larcenygame/dogGuard.t3dm", .scale = 0.35f, .offset = {{0, -35, 0}}, .has_skeleton = true},
+    {.path = "rom:/lucker/snake.t3dm", .scale = 0.2f, .offset = {{0, -28, 0}}, .has_skeleton = true},
     {.path = "rom:/rampage/Jira_01.t3dm", .scale = 0.2f, .offset = {{0, -25, 0}}, .has_skeleton = true},
     {.path = "rom:/spacewaves/enemycraft.t3dm", .scale = 0.2f, .offset = {{0, 0, -20}}, .has_skeleton = false},
-    {.path = "rom:/strawberry_byte/dogman.t3dm", .scale = 0.2f, .offset = {{0, 0, 0}}, .has_skeleton = true},
-    {.path = "rom:/strawberry_byte/mew.t3dm", .scale = 0.2f, .offset = {{0, 0, 0}}, .has_skeleton = true},
-    {.path = "rom:/strawberry_byte/s4ys.t3dm", .scale = 0.2f, .offset = {{0, 0, 0}}, .has_skeleton = true},
-    {.path = "rom:/strawberry_byte/wolfie.t3dm", .scale = 0.2f, .offset = {{0, 0, 0}}, .has_skeleton = true},
-    {.path = "rom:/tohubohu/player.t3dm", .scale = 0.2f, .offset = {{0, -30, 0}}, .has_skeleton = true},
+    {.path = "rom:/strawberry_byte/dogman.t3dm", .scale = 0.23f, .offset = {{0, -35, 0}}, .rotation = {{-80, 0, 0}}, .has_skeleton = true},
+    {.path = "rom:/strawberry_byte/mew.t3dm", .scale = 0.28f, .offset = {{0, -32, 0}}, .rotation = {{-80, 0, 0}}, .has_skeleton = true},
+    {.path = "rom:/strawberry_byte/s4ys.t3dm", .scale = 0.25f, .offset = {{0, -32, 0}}, .rotation = {{-80, 0, 0}}, .has_skeleton = true},
+    {.path = "rom:/strawberry_byte/wolfie.t3dm", .scale = 0.27f, .offset = {{0, -35, 0}}, .rotation = {{-80, 0, 0}}, .has_skeleton = true},
+    {.path = "rom:/tohubohu/player.t3dm", .scale = 0.2f, .offset = {{0, -35, 0}}, .has_skeleton = true},
+    {.path = "rom:/core/brew_logo.t3dm", .scale = 0.057f, .offset = {{0, -11, 0}}, .has_skeleton = false},
+    {.path = "rom:/paintball/char.t3dm", .scale = 0.175f, .offset = {{0, -43, 0}}, .has_skeleton = false},
+    {.path = "rom:/riistahillo/controller.t3dm", .scale = 0.3f, .offset = {{0, -18, 0}}, .rotation = {{0, 90, 0}}, .has_skeleton = false},
+    {.path = "rom:/snowmen/p1.t3dm", .scale = 0.0038f, .offset = {{0, -35, 0}}, .has_skeleton = true},
 };
 
 static model_data *cur_model;
@@ -89,6 +95,7 @@ void titlescreen_init()
     viewport = t3d_viewport_create();
 
     mtx = malloc_uncached(sizeof(T3DMat4FP));
+    mtx2 = malloc_uncached(sizeof(T3DMat4FP));
 
     rspq_block_begin();
     if (cur_model->has_skeleton) {
@@ -118,6 +125,7 @@ void titlescreen_loop(float deltatime)
 
     if (global_is_fading) {
         global_fade -= deltatime;
+        xm64player_set_vol(&global_music, global_fade/FADE_DURATION);
         if  (global_fade < 0.0f) {
             core_level_changeto(LEVEL_GAMESETUP);
         }
@@ -132,8 +140,13 @@ void titlescreen_loop(float deltatime)
     }
     t3d_mat4fp_from_srt_euler(mtx,
         (float[3]){cur_model->scale, cur_model->scale, cur_model->scale},
-        (float[3]){0.0f, global_flash, 0},
+        (float[3]){0, 0 + global_flash, 0},
         cur_model->offset.v
+    );
+    t3d_mat4fp_from_srt_euler(mtx2,
+        (float[3]){1, 1, 1},
+        (float[3]){cur_model->rotation.x, cur_model->rotation.y, cur_model->rotation.z},
+        (float[3]){0, 0, 0}
     );
 
     // Get a framebuffer
@@ -156,8 +169,10 @@ void titlescreen_loop(float deltatime)
     t3d_light_set_ambient(colorAmbient);
     t3d_light_set_count(0);
     t3d_matrix_push(mtx);
+    t3d_matrix_push(mtx2);
     rspq_block_run(model_block);
     sync = rspq_syncpoint_new();
+    t3d_matrix_pop(1);
     t3d_matrix_pop(1);
 
     rdpq_sync_pipe();
@@ -196,7 +211,7 @@ void titlescreen_cleanup()
     xm64player_stop(&global_music);
     xm64player_close(&global_music);
     rspq_block_free(model_block);
-    free_uncached(mtx);
+    free_uncached(mtx2);
     if (cur_model->has_skeleton) {
         t3d_skeleton_destroy(&skeleton);
     }
