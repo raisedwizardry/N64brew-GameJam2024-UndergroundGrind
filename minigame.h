@@ -50,9 +50,10 @@ extern "C" {
     extern size_t    global_minigame_count;
 
     void      minigame_loadall();
-    void      minigame_play(char* name);
+    void      minigame_loadnext(char* name);
     void      minigame_cleanup();
     Minigame* minigame_get_game();
+    int       minigame_get_index();
     bool      minigame_get_ended();
 
 #ifdef __cplusplus

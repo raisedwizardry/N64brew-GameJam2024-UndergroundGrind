@@ -43,14 +43,14 @@ $(FILESYSTEM_DIR)/avanto/%.sprite: $(ASSETS_DIR)/avanto/%.png
 	@echo "    [AVANTO SPRITE] $@"
 	$(N64_MKSPRITE) $(AVANTO MKSPRITE_FLAGS) -o $(dir $@) "$<"
 
-$(FILESYSTEM_DIR)/avanto/banner.font64: $(ASSETS_DIR)/squarewave.ttf
+# Generate both fonts at the same time form the same source.
+# Usage of pattern rules here is a trick:
+# https://stackoverflow.com/questions/2973445/gnu-makefile-rule-generating-a-few-targets-from-a-single-source-file
+$(FILESYSTEM_DIR)/avanto/banner%font64 $(FILESYSTEM_DIR)/avanto/timer%font64: $(ASSETS_DIR)/squarewave.ttf
 	@mkdir -p $(dir $@)
 	@echo "    [AVANTO FONT] $@"
 	$(N64_MKFONT) --outline 2 --range 20-5A -s 100 -o $(dir $@) "$<"
 	mv "$(dir $@)/squarewave.font64" "$@"
-
-$(FILESYSTEM_DIR)/avanto/timer.font64: $(ASSETS_DIR)/squarewave.ttf
-	@mkdir -p $(dir $@)
 	@echo "    [AVANTO FONT] $@"
 	$(N64_MKFONT) --outline 1 --range 30-39 -s 48 --ellipsis 30,3 -o $(dir $@) "$<"
 	mv "$(dir $@)/squarewave.font64" "$@"

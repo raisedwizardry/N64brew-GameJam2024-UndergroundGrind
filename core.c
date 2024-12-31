@@ -7,7 +7,14 @@ player, AI, and game loop information.
 
 #include <libdragon.h>
 #include "core.h"
+#include "minigame.h"
 #include "config.h"
+#include "setup.h"
+#include "menu.h"
+#include "results.h"
+#include "logo.h"
+#include "savestate.h"
+#include "title.h"
 
 
 /*********************************
@@ -15,7 +22,6 @@ player, AI, and game loop information.
 *********************************/
 
 typedef struct {
-    PlyNum number;
     joypad_port_t port;
 } Player;
 
@@ -28,12 +34,21 @@ typedef struct {
 static Player   global_core_players[JOYPAD_PORT_COUNT];
 static uint32_t global_core_playercount;
 static AiDiff   global_core_aidifficulty = AI_DIFFICULTY;
+static PlyNum   global_core_chooser;
 
 // Minigame info
 static bool global_core_playeriswinner[MAXPLAYERS];
 
 // Core info
 static double global_core_subtick = 0;
+
+// Level info
+static Level* global_core_curlevel;
+static Level* global_core_nextlevel = NULL;
+static Level global_core_alllevels[LEVELCOUNT];
+
+// Game info
+static NextRound global_nextroundtype = NR_LEAST;
 
 
 /*==============================
@@ -52,31 +67,39 @@ void core_set_subtick(double subtick)
 /*==============================
     core_set_playercount
     Sets the number of human players
-    @param  The number of players
+    @param  The list of which controllers are enabled
 ==============================*/
 
-void core_set_playercount(uint32_t playercount)
+void core_set_playercount(bool* enabledconts)
 {
-    int lastcont = 0;
+    int plynum = 0;
 
     // Attempt to find the first N left-most available controllers
-    for (int i=0; i<playercount; i++)
+    for (int i=0; i<MAXPLAYERS; i++)
     {
-        bool found = false;
-        for (int j=lastcont; j<JOYPAD_PORT_COUNT; j++)
+        if (enabledconts[i])
         {
-            if (joypad_is_connected(j))
-            {
-                global_core_players[i].port = j;
-                found = true;
-                lastcont = ++j;
-                break;
-            }
+            global_core_players[plynum].port = i;
+            plynum++;
         }
-        assertf(found, "Unable to find an available controller for player %d\n", i+1);
     }
-    global_core_playercount = playercount;
+    global_core_playercount = plynum;
 }
+
+
+/*==============================
+    core_get_playerconts
+    TODO
+==============================*/
+
+void core_get_playerconts(bool* enabledconts)
+{
+    for (int i=0; i<MAXPLAYERS; i++)
+        enabledconts[i] = false;
+    for (int i=0; i<global_core_playercount; i++)
+        enabledconts[global_core_players[i].port] = true;
+}
+
 
 /*==============================
     core_set_aidifficulty
@@ -89,6 +112,18 @@ void core_set_aidifficulty(AiDiff difficulty)
     global_core_aidifficulty = difficulty;
 }
 
+
+/*==============================
+    core_get_winner
+    Returns whether a player has won the last minigame.
+    @param  The player to query
+    @return True if the player has won, false otherwise.
+==============================*/
+
+bool core_get_winner(PlyNum ply)
+{
+    return global_core_playeriswinner[ply];
+}
 
 /*==============================
     core_set_winner
@@ -163,4 +198,183 @@ void core_reset_winners()
 {
     for (int i=0; i<MAXPLAYERS; i++)
         global_core_playeriswinner[i] = false;
+}
+
+
+/*==============================
+    core_initlevels
+    Initializes the levels struct
+==============================*/
+
+void core_initlevels()
+{
+    global_core_nextlevel = NULL;
+    global_core_curlevel = NULL;
+
+    global_core_alllevels[LEVEL_LOADSAVE].funcPointer_init      = loadsave_init;
+    global_core_alllevels[LEVEL_LOADSAVE].funcPointer_loop      = loadsave_loop;
+    global_core_alllevels[LEVEL_LOADSAVE].funcPointer_fixedloop = NULL;
+    global_core_alllevels[LEVEL_LOADSAVE].funcPointer_cleanup   = loadsave_cleanup;
+
+    global_core_alllevels[LEVEL_MAINMENU].funcPointer_init      = titlescreen_init;
+    global_core_alllevels[LEVEL_MAINMENU].funcPointer_loop      = titlescreen_loop;
+    global_core_alllevels[LEVEL_MAINMENU].funcPointer_fixedloop = NULL;
+    global_core_alllevels[LEVEL_MAINMENU].funcPointer_cleanup   = titlescreen_cleanup;
+
+    global_core_alllevels[LEVEL_GAMESETUP].funcPointer_init      = setup_init;
+    global_core_alllevels[LEVEL_GAMESETUP].funcPointer_loop      = setup_loop;
+    global_core_alllevels[LEVEL_GAMESETUP].funcPointer_fixedloop = NULL;
+    global_core_alllevels[LEVEL_GAMESETUP].funcPointer_cleanup   = setup_cleanup;
+
+    global_core_alllevels[LEVEL_MINIGAMESELECT].funcPointer_init      = menu_init;
+    global_core_alllevels[LEVEL_MINIGAMESELECT].funcPointer_loop      = menu_loop;
+    global_core_alllevels[LEVEL_MINIGAMESELECT].funcPointer_fixedloop = NULL;
+    global_core_alllevels[LEVEL_MINIGAMESELECT].funcPointer_cleanup   = menu_cleanup;
+
+    global_core_alllevels[LEVEL_RESULTS].funcPointer_init      = results_init;
+    global_core_alllevels[LEVEL_RESULTS].funcPointer_loop      = results_loop;
+    global_core_alllevels[LEVEL_RESULTS].funcPointer_fixedloop = NULL;
+    global_core_alllevels[LEVEL_RESULTS].funcPointer_cleanup   = results_cleanup;
+}
+
+
+/*==============================
+    core_level_changeto
+    Changes the level
+    @param  The level to change to
+==============================*/
+
+void core_level_changeto(LevelDef level)
+{
+    if (level == LEVEL_MINIGAME)
+    {
+        global_core_alllevels[LEVEL_MINIGAME].funcPointer_init = minigame_get_game()->funcPointer_init;      
+        global_core_alllevels[LEVEL_MINIGAME].funcPointer_loop = minigame_get_game()->funcPointer_loop;      
+        global_core_alllevels[LEVEL_MINIGAME].funcPointer_fixedloop = minigame_get_game()->funcPointer_fixedloop; 
+        global_core_alllevels[LEVEL_MINIGAME].funcPointer_cleanup = minigame_get_game()->funcPointer_cleanup;   
+    }
+    global_core_nextlevel = &global_core_alllevels[level];
+}
+
+
+/*==============================
+    core_level_doinit
+    Calls the level's init function
+==============================*/
+
+void core_level_doinit()
+{
+    if (global_core_nextlevel != NULL)
+    {
+        global_core_curlevel = global_core_nextlevel;
+        global_core_nextlevel = NULL;
+    }
+
+    if (global_core_curlevel == &global_core_alllevels[LEVEL_MINIGAME])
+        core_reset_winners();
+    if (global_core_curlevel->funcPointer_init)
+        global_core_curlevel->funcPointer_init();
+}
+
+
+/*==============================
+    core_level_doloop
+    Calls the level's loop function
+    @param  The deltatime
+==============================*/
+
+void core_level_doloop(float deltatime)
+{
+    if (global_core_curlevel->funcPointer_loop)
+        global_core_curlevel->funcPointer_loop(deltatime);
+}
+
+
+/*==============================
+    core_level_dofixedloop
+    Calls the level's fixed loop function
+    @param  The deltatime
+==============================*/
+
+void core_level_dofixedloop(float deltatime)
+{
+    if (global_core_curlevel->funcPointer_fixedloop)
+        global_core_curlevel->funcPointer_fixedloop(deltatime);
+}
+
+
+/*==============================
+    core_level_docleanup
+    Calls the level's cleanup function
+==============================*/
+
+void core_level_docleanup()
+{
+    rspq_wait();
+    for (int i=0; i<32; i++)
+        mixer_ch_stop(i);
+    //menu_copy_minigame_frame();
+    if (global_core_curlevel->funcPointer_cleanup)
+        global_core_curlevel->funcPointer_cleanup();
+    if (global_core_curlevel == &global_core_alllevels[LEVEL_MINIGAME])
+        minigame_cleanup();
+    mixer_close();
+    mixer_init(32);
+}
+
+
+/*==============================
+    core_level_waschanged
+    Checks if the level was recently changed
+    @return If the level was recently changed
+==============================*/
+
+bool core_level_waschanged()
+{
+    return global_core_nextlevel != NULL;
+}
+
+
+/*==============================
+    core_set_nextround
+    Sets how the next round is decided
+==============================*/
+
+void core_set_nextround(NextRound type)
+{
+    global_nextroundtype = type;
+}
+
+
+/*==============================
+    core_get_nextround
+    Gets how the next round is decided
+    @return The NextRound type
+==============================*/
+
+NextRound core_get_nextround()
+{
+    return global_nextroundtype;
+}
+
+
+/*==============================
+    core_set_curchooser
+    TODO
+==============================*/
+
+void core_set_curchooser(PlyNum ply)
+{
+    global_core_chooser = ply;
+}
+
+
+/*==============================
+    core_get_curchooser
+    TODO
+==============================*/
+
+PlyNum core_get_curchooser()
+{
+    return global_core_chooser;
 }

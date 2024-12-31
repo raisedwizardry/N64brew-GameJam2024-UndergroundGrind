@@ -89,14 +89,14 @@ void minigame_loadall()
 
 
 /*==============================
-    minigame_play
-    Executes a minigame
-    @param  The internal filename of the minigame to play
+    minigame_loadnext
+    Loads a minigame
+    @param  The internal filename of the minigame to load
 ==============================*/
 
-void minigame_play(char* name)
+void minigame_loadnext(char* name)
 {
-    debugf("Loading minigame: %s\n", name);
+    //debugf("Loading minigame: %s\n", name);
 
     // Find the minigame with that name
     global_minigame_current = NULL;
@@ -104,7 +104,7 @@ void minigame_play(char* name)
     {
         if (!strcmp(global_minigame_list[i].internalname, name))
         {
-            debugf("Success!\n");
+            //debugf("Success!\n");
             global_minigame_current = &global_minigame_list[i];
             break;
         }
@@ -131,6 +131,10 @@ void minigame_play(char* name)
 void minigame_end()
 {
     global_minigame_ending = true;
+    if (core_get_nextround() != NR_FREEPLAY)
+        core_level_changeto(LEVEL_RESULTS);
+    else
+        core_level_changeto(LEVEL_MINIGAMESELECT);
 }
 
 
@@ -143,6 +147,17 @@ void minigame_end()
 Minigame* minigame_get_game()
 {
     return global_minigame_current;
+}
+
+
+/*==============================
+    minigame_get_index
+    TODO
+==============================*/
+
+int minigame_get_index()
+{
+    return (global_minigame_current - global_minigame_list);
 }
 
 

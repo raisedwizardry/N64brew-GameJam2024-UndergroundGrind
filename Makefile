@@ -8,24 +8,34 @@ MINIGAME_DIR = code
 FILESYSTEM_DIR = filesystem
 MINIGAMEDSO_DIR = $(FILESYSTEM_DIR)/minigames
 
-SRC = main.c core.c minigame.c menu.c
+SRC = main.c core.c minigame.c menu.c logo.c savestate.c results.c setup.c title.c
 
 filesystem/squarewave.font64: MKFONT_FLAGS += --outline 1 --range all
+filesystem/squarewave_l.font64: MKFONT_FLAGS += --outline 1 --range all --size 20
+filesystem/squarewave_xl.font64: MKFONT_FLAGS += --outline 1 --range all --size 30
+filesystem/core/brewlogo.sprite: MKFONT_FLAGS += --format CI4 -c 2
+filesystem/core/dragon1.sprite: MKSPRITE_FLAGS += --format I4 -c 2
+filesystem/core/dragon2.sprite: MKSPRITE_FLAGS += --format I4 -c 2
+filesystem/core/dragon3.sprite: MKSPRITE_FLAGS += --format I4 -c 2
+filesystem/core/dragon4.sprite: MKSPRITE_FLAGS += --format I4 -c 2
+filesystem/core/dragon.wav64: AUDIOCONV_FLAGS += --wav-resample 32000 --wav-mono --wav-compress 3
 
 ###
 
 include $(N64_INST)/include/n64.mk
 include $(N64_INST)/include/t3d.mk
 
+N64_ROM_SAVETYPE = eeprom4k
+
 MINIGAMES_LIST = $(notdir $(wildcard $(MINIGAME_DIR)/*))
 DSO_LIST = $(addprefix $(MINIGAMEDSO_DIR)/, $(addsuffix .dso, $(MINIGAMES_LIST)))
 
 IMAGE_LIST = $(wildcard $(ASSETS_DIR)/*.png) $(wildcard $(ASSETS_DIR)/core/*.png)
 FONT_LIST  = $(wildcard $(ASSETS_DIR)/*.ttf)
-MODEL_LIST  = $(wildcard $(ASSETS_DIR)/*.glb)
+MODEL_LIST  = $(wildcard $(ASSETS_DIR)/*.glb) $(wildcard $(ASSETS_DIR)/core/*.glb)
 SOUND_LIST  = $(wildcard $(ASSETS_DIR)/*.wav) $(wildcard $(ASSETS_DIR)/core/*.wav)
 SOUND2_LIST  = $(wildcard $(ASSETS_DIR)/*.mp3) $(wildcard $(ASSETS_DIR)/core/*.mp3)
-MUSIC_LIST  = $(wildcard $(ASSETS_DIR)/*.xm)
+MUSIC_LIST  = $(wildcard $(ASSETS_DIR)/*.xm)  $(wildcard $(ASSETS_DIR)/core/*.xm)
 ASSETS_LIST += $(subst $(ASSETS_DIR),$(FILESYSTEM_DIR),$(IMAGE_LIST:%.png=%.sprite))
 ASSETS_LIST += $(subst $(ASSETS_DIR),$(FILESYSTEM_DIR),$(FONT_LIST:%.ttf=%.font64))
 ASSETS_LIST += $(subst $(ASSETS_DIR),$(FILESYSTEM_DIR),$(MODEL_LIST:%.glb=%.t3dm))

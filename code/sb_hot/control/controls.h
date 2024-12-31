@@ -23,14 +23,14 @@ void controllerData_rumbleFrames(ControllerData *data, uint8_t port, uint8_t fra
 
 void controllerData_getInputs(ControllerData *data, uint8_t port)
 {
-    data->pressed = joypad_get_buttons_pressed(port);
-    data->held = joypad_get_buttons_held(port);
-    data->released = joypad_get_buttons_released(port);
-    data->input = joypad_get_inputs(port);
+    data->pressed = joypad_get_buttons_pressed(core_get_playercontroller(port));
+    data->held = joypad_get_buttons_held(core_get_playercontroller(port));
+    data->released = joypad_get_buttons_released(core_get_playercontroller(port));
+    data->input = joypad_get_inputs(core_get_playercontroller(port));
 
     // Check if the rumble pak has been unplugged
-    if (!joypad_get_rumble_supported(port))
-        controllerData_rumbleStop(data, port);
+    if (!joypad_get_rumble_supported(core_get_playercontroller(port)))
+        controllerData_rumbleStop(data, core_get_playercontroller(port));
 }
 
 /* RUMBLE */
@@ -38,7 +38,7 @@ void controllerData_getInputs(ControllerData *data, uint8_t port)
 // Set rumble to active state
 void controllerData_rumbleStart(ControllerData *data, uint8_t port)
 {
-    joypad_set_rumble_active(port, true);
+    joypad_set_rumble_active(core_get_playercontroller(port), true);
     data->rumble_time = 0;
     data->rumble_active = true;
 }
@@ -46,7 +46,7 @@ void controllerData_rumbleStart(ControllerData *data, uint8_t port)
 // Reset rumble to idle state
 void controllerData_rumbleStop(ControllerData *data, uint8_t port)
 {
-    joypad_set_rumble_active(port, false);
+    joypad_set_rumble_active(core_get_playercontroller(port), false);
     data->rumble_time = 0;
     data->rumble_active = false;
 }
@@ -57,13 +57,13 @@ void controllerData_rumbleFrames(ControllerData *data, uint8_t port, uint8_t fra
 
     if (data->rumble_active == false)
     {
-        controllerData_rumbleStart(data, port);
+        controllerData_rumbleStart(data, core_get_playercontroller(port));
     }
 
     data->rumble_time++;
 
     if (data->rumble_time >= frames)
-        controllerData_rumbleStop(data, port);
+        controllerData_rumbleStop(data, core_get_playercontroller(port));
 }
 
 ///// 8 WAY /////
