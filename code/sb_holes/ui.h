@@ -251,7 +251,7 @@ void ui_intro(control_data *control)
             ui_spriteDraw(TILE3, sprite_faceButtons0, 0, 152, 66);
         }
 
-        joypad_inputs_t joypad = joypad_get_inputs(PLAYER_1);
+        joypad_inputs_t joypad = joypad_get_inputs(core_get_playercontroller(PLAYER_1));
 
         ui_spriteDraw(TILE5, sprite_controlStick, 0, 134, 86);
         int stickX = 134 + (joypad.stick_x / 15);

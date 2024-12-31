@@ -84,9 +84,9 @@ void render_scene(game_data *game, scene_data *scene)
     if (game->scene == INTRO)
     {
 
-        players[0].btn.pressed = joypad_get_buttons_pressed(PLAYER_1);
-        players[0].btn.held = joypad_get_buttons_held(PLAYER_1);
-        players[0].btn.released = joypad_get_buttons_released(PLAYER_1);
+        players[0].btn.pressed = joypad_get_buttons_pressed(core_get_playercontroller(PLAYER_1));
+        players[0].btn.held = joypad_get_buttons_held(core_get_playercontroller(PLAYER_1));
+        players[0].btn.released = joypad_get_buttons_released(core_get_playercontroller(PLAYER_1));
         ui_intro(&players[0].btn);
         if (players[0].btn.pressed.start)
         {
@@ -121,9 +121,9 @@ void render_scene(game_data *game, scene_data *scene)
     }
     else if (game->scene == PAUSE)
     {
-        players[0].btn.pressed = joypad_get_buttons_pressed(PLAYER_1);
-        players[0].btn.held = joypad_get_buttons_held(PLAYER_1);
-        players[0].btn.released = joypad_get_buttons_released(PLAYER_1);
+        players[0].btn.pressed = joypad_get_buttons_pressed(core_get_playercontroller(PLAYER_1));
+        players[0].btn.held = joypad_get_buttons_held(core_get_playercontroller(PLAYER_1));
+        players[0].btn.released = joypad_get_buttons_released(core_get_playercontroller(PLAYER_1));
         ui_pause(&players[0].btn);
         if (players[0].btn.pressed.start)
             game->scene = GAMEPLAY;
