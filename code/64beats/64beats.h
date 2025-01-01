@@ -3,7 +3,7 @@
 
 #define UI_SCALE 1.0
 #define SCREEN_MARGIN_TOP 24
-#define MAX_ARROWS 125 * 4 / 2
+#define MAX_ARROWS (125 * 4 / 2)
 #define SPEED_MULTI 1.0
 #define ACCURACY 200
 int32_t songTime = -10000;
