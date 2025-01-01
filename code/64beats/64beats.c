@@ -347,7 +347,7 @@ int countValidEntries()
 }
 
 track defloration() {
-    track thisTrack;
+    track thisTrack = {0};
     int arrowCounter = 0;
     thisTrack.bpm = 125;
     thisTrack.introLength = 4929;
