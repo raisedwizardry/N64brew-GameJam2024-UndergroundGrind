@@ -19,6 +19,13 @@ PlayerController_UpdateAllPlayerMovements
 ================*/
 void PlayerController_UpdateAllPlayerMovements(AppData* _appData){
 	for(int i = 0; i < PLAYER_COUNT; ++i){
+		AF_CAI_Behaviour* aiBehaviour = _appData->gameplayData.playerEntities[i]->aiBehaviour;
+		BOOL hasAIBehaviour = AF_Component_GetHas(aiBehaviour->enabled);
+		// skipp if this is an AI
+		if(hasAIBehaviour == TRUE){
+			return;
+		}
+
 		// player 1
 		PlayerController_UpdatePlayerMovement(_appData->input.controlSticks[i], _appData->gameplayData.playerEntities[i]);
 		PlayerController_UpdatePlayerButtonPress(i, &_appData->input, _appData->gameplayData.playerEntities[i]);
@@ -33,6 +40,7 @@ void PlayerController_UpdatePlayerButtonPress(uint8_t _playerIndex, AF_Input* _i
 	// Handle attack
 		AF_CPlayerData* playerData = _entity->playerData;
 
+		
 		
 		// A to attack
 		if(_input->keys[_playerIndex][A_KEY].pressed == 1){
@@ -72,21 +80,24 @@ convert the input into directions on velocity
 apply physics
 ================*/
  void PlayerController_UpdatePlayerMovement(Vec2 _stick, AF_Entity* _entity){
-	int vecX = 0;
-	int vecY = 0;
+	float vecX = 0;
+	float vecY = 0;
+	const float MAX_JOYPAD_VALUE = 85.0f;
+	const float INV_MAX_JOYPAD_VALUE = 1.0f / MAX_JOYPAD_VALUE; //  reciprocal
+
     // Player 1
 	if (_stick.y > STICK_DEAD_ZONE){
-		vecY = -1;
+		vecY = -(_stick.y * INV_MAX_JOYPAD_VALUE);
 	}
 	if(_stick.y < -STICK_DEAD_ZONE){
-		vecY = 1;
+		vecY = -(_stick.y * INV_MAX_JOYPAD_VALUE);
 	}
 
 	if(_stick.x > STICK_DEAD_ZONE){
-		vecX = 1;
+		vecX = _stick.x * INV_MAX_JOYPAD_VALUE;
 	}
 	if(_stick.x < -STICK_DEAD_ZONE ){
-		vecX = -1;
+		vecX = _stick.x * INV_MAX_JOYPAD_VALUE;
 	}
 
 	if(_stick.x == 0){

@@ -99,38 +99,21 @@ void AF_Input_Update(AF_Input* _input){
 		_input->keys[3][START_KEY].pressed = pressed4.start;
 	
 
-
-		// Player 1
-        float y = inputs.stick_y / 128.0f;
-        float x = inputs.stick_x / 128.0f;
-
-		// Player 2
-		float x2 = inputs2.stick_x / 128.0f;
-		float y2 = inputs2.stick_y / 128.0f;
-
-		// Player 2
-		float x3 = inputs3.stick_x / 128.0f;
-		float y3 = inputs3.stick_y / 128.0f;
-
-		// Player 2
-		float x4 = inputs4.stick_x / 128.0f;
-		float y4 = inputs4.stick_y / 128.0f;
-
 		//player 1
-		_input->controlSticks[0].x = x;
-		_input->controlSticks[0].y = y;	
+		_input->controlSticks[0].x = inputs.stick_x;
+		_input->controlSticks[0].y = inputs.stick_y;
 
 		// Player 2
-		_input->controlSticks[1].x = x2;
-		_input->controlSticks[1].y= y2;
+		_input->controlSticks[1].x = inputs2.stick_x;
+		_input->controlSticks[1].y= inputs2.stick_y;
 
 		// Player 3
-		_input->controlSticks[2].x = x3;
-		_input->controlSticks[2].y = y3;
+		_input->controlSticks[2].x = inputs3.stick_x;
+		_input->controlSticks[2].y = inputs3.stick_y;
 
 		// Player 4
-		_input->controlSticks[3].x = x4;
-		_input->controlSticks[3].y = y4;
+		_input->controlSticks[3].x = inputs4.stick_x;
+		_input->controlSticks[3].y = inputs4.stick_y;
 
 
 		
