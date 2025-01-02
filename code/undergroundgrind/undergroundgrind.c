@@ -59,7 +59,6 @@ T3DModel *chestModel;
 T3DVec3 camPos;
 T3DVec3 camTarget;
 T3DVec3 lightDirVec;
-xm64player_t music;
 
 int chestBlockNumber;
 
@@ -210,8 +209,6 @@ void minigame_init(void)
   wav64_open(&sfx_countdown, "rom:/core/Countdown.wav64");
   wav64_open(&sfx_stop, "rom:/core/Stop.wav64");
   wav64_open(&sfx_winner, "rom:/core/Winner.wav64");
-  xm64player_open(&music, "rom:/undergroundgrind/bottled_bubbles.xm64");
-  xm64player_play(&music, 0);
 }
 
 void player_do_damage(SnakePlayer *player)
@@ -351,19 +348,22 @@ void player_loop(SnakePlayer *player, float deltaTime, joypad_port_t port, bool 
       }
       player->comboBonus = 15;
     }
-    if ((btn.z || btn.a) && !player->animAttack.isPlaying) {
-      t3d_anim_set_playing(&player->animAttack, true);
-      t3d_anim_set_time(&player->animAttack, 0.0f);
-      player->isAttack = true;
-      player->attackTimer = 0;
-      if (btn.a) {
-        player->previousButtonPressed = btn.a;
-      }
-      if (btn.z) {
-        player->previousButtonPressed = btn.z;
-      }
-      player->comboBonus = 0;
+    else {
+        if ((btn.z || btn.a) && !player->animAttack.isPlaying) {
+            t3d_anim_set_playing(&player->animAttack, true);
+            t3d_anim_set_time(&player->animAttack, 0.0f);
+            player->isAttack = true;
+            player->attackTimer = 0;
+            if (btn.a) {
+                player->previousButtonPressed = btn.a;
+            }
+            if (btn.z) {
+                player->previousButtonPressed = btn.z;
+            }
+            player->comboBonus = 0;
+        }
     }
+
 
   }
   
@@ -559,8 +559,6 @@ void minigame_cleanup(void)
   wav64_close(&sfx_countdown);
   wav64_close(&sfx_stop);
   wav64_close(&sfx_winner);
-  xm64player_stop(&music);
-  xm64player_close(&music);
   rspq_block_free(dplMap);
 
   t3d_model_free(snakeModel);

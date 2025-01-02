@@ -9,6 +9,7 @@ typedef struct
     rspq_block_t *dplDirtBlock;
     T3DVec3 dirtBlockPos;
     PlyNum destroyingPlayer;
+    PlyNum containedPlayer;
     bool isContainingChest;
     bool isDestroyed;
     int damage;
