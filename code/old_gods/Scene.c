@@ -70,7 +70,11 @@ AF_Entity* g_ratPtr = NULL;
 #define ATTACK_RADIUS       5.0f
 #define ATTACK_FORCE_STRENGTH 10.0f
 #define PLAYER_MOVEMENT_SPEED 1.0f
-#define AI_MOVEMENT_SPEED_MOD 0.075f
+
+#define AI_MOVEMENT_SPEED_EASY 10.0f
+#define AI_MOVEMENT_SPEED_MEDIUM 15.0f
+#define AI_MOVEMENT_SPEED_HARD 20.0f
+
 #define AI_TARGET_DISTANCE 1.0f
 #define RAT_MOVEMENT_SPEED 0.5f
 
@@ -573,6 +577,9 @@ General Setup function, to setup audio effects
 void Scene_Setup_Audio(AppData* _appData){
     wav64_open(&feedGodSoundFX,feedGodSoundFXPath);
     wav64_open(&pickupSoundFX, pickupSoundFXPath);
+
+    // Soften the pickup sounds
+    mixer_ch_set_vol(16, 0.5f, 0.5f);
 }
 
 /* ================
@@ -672,8 +679,7 @@ void Scene_Setup_Players(AppData* _appData){
     *player1Entity->playerData = AF_CPlayerData_ADD();
     player1Entity->playerData->faction = PLAYER;
     player1Entity->playerData->startPosition = player1Pos;
-    // For some reason player 1 is faster. not sure so halving the speed
-    player1Entity->playerData->movementSpeed = PLAYER_MOVEMENT_SPEED * .25f;
+    player1Entity->playerData->movementSpeed = PLAYER_MOVEMENT_SPEED;
     *player1Entity->skeletalAnimation = AF_CSkeletalAnimation_ADD();
 
     
@@ -700,7 +706,6 @@ void Scene_Setup_Players(AppData* _appData){
 
     // Get AI Level
     //AI_MOVEMENT_SPEED_MOD * ((2-core_get_aidifficulty())*5 + rand()%((3-core_get_aidifficulty())*3));
-    float aiReactionSpeed = AI_MOVEMENT_SPEED_MOD * ((1+core_get_aidifficulty()) + rand()%((1+core_get_aidifficulty())));
     
     // Create Player2
 	Vec3 player2Pos = {-2.0f, 0.0f, 1.0f};
@@ -716,7 +721,6 @@ void Scene_Setup_Players(AppData* _appData){
     player2Entity->playerData->faction = PLAYER;
     player2Entity->playerData->movementSpeed = PLAYER_MOVEMENT_SPEED;
     player2Entity->playerData->startPosition = player2Pos;
-    player2Entity->playerData->movementSpeed = aiReactionSpeed;
     *player2Entity->skeletalAnimation = AF_CSkeletalAnimation_ADD();
 
     // Create Player2 Foam Trail
@@ -753,7 +757,6 @@ void Scene_Setup_Players(AppData* _appData){
     player3Entity->playerData->movementSpeed = PLAYER_MOVEMENT_SPEED;
     player3Entity->playerData->faction = PLAYER;
     player3Entity->playerData->startPosition = player3Pos;
-    player3Entity->playerData->movementSpeed = aiReactionSpeed;
     *player3Entity->skeletalAnimation = AF_CSkeletalAnimation_ADD();
 
     // Create Player3 Foam Trail
@@ -791,7 +794,6 @@ void Scene_Setup_Players(AppData* _appData){
     player4Entity->playerData->movementSpeed = PLAYER_MOVEMENT_SPEED;
     player4Entity->playerData->faction = PLAYER;
     player4Entity->playerData->startPosition = player4Pos;
-    player4Entity->playerData->movementSpeed = aiReactionSpeed;
     *player4Entity->skeletalAnimation = AF_CSkeletalAnimation_ADD();
 
     // Create Player4 Foam Trail
@@ -817,9 +819,30 @@ void Scene_Setup_Players(AppData* _appData){
 
     // assign AI to other players based on the players choosen in the game jam menu
     // skip the first player as its always controllable
+    float aiMovementSpeed = AI_MOVEMENT_SPEED_EASY;
+    switch (core_get_aidifficulty()){
+        case DIFF_EASY:
+            aiMovementSpeed = AI_MOVEMENT_SPEED_EASY;
+        break;
+        case DIFF_MEDIUM:
+            aiMovementSpeed = AI_MOVEMENT_SPEED_MEDIUM;
+        break;
+
+        case DIFF_HARD:
+            aiMovementSpeed = AI_MOVEMENT_SPEED_HARD;
+        break;
+
+        default:
+            aiMovementSpeed = AI_MOVEMENT_SPEED_EASY;
+        break;
+
+    }
     for(int i = core_get_playercount(); i < PLAYER_COUNT; ++i){
         AF_Entity* aiPlayerEntity = _appData->gameplayData.playerEntities[i];
         *aiPlayerEntity->aiBehaviour = AF_CAI_Behaviour_ADD();
+
+        AF_CPlayerData* playerData = _appData->gameplayData.playerEntities[i]->playerData;
+        playerData->movementSpeed = aiMovementSpeed;
         //AI_CreateFollow_Action(aiPlayerEntity, player1Entity,  Scene_AIStateMachine);
         //BOOL hasAI = AF_Component_GetHas(aiPlayerEntity->aiBehaviour->enabled );
         //BOOL isEnabled = AF_Component_GetEnabled(aiPlayerEntity->aiBehaviour->enabled);
@@ -1125,7 +1148,7 @@ void Scene_SetupSharks(AppData* _appData){
 
         // player data
         *sharkHunterEntity->playerData = AF_CPlayerData_ADD();
-        sharkHunterEntity->playerData->movementSpeed = AI_MOVEMENT_SPEED_MOD * ((1+core_get_aidifficulty()) + rand()%((1+core_get_aidifficulty())))*2;
+        sharkHunterEntity->playerData->movementSpeed = AI_MOVEMENT_SPEED_HARD;
         sharkHunterEntity->playerData->faction = ENEMY2;
 
         // AI
